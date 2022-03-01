@@ -7,6 +7,7 @@ from evaluate import error_idxs
 from loadfile import extract_file_idxs_from_lines, get_fname_lines, transcriptions
 import matplotlib.pyplot as plt
 
+from phonemes import get_swedish_phonemes, init_phonemizer, preprocess_phonemes
 from preprocess import preprocess_text, w2id, encode_txt, remove_punct
 
 
@@ -260,6 +261,15 @@ def multispeaker_eval():
     correct_lines = [preprocess_text(x) for x in correct_lines]
     kb_lines = [preprocess_text(x) for x in kb_lines]
 
+
+    phonemizer = init_phonemizer("cuda", "./models/deep-phonemizer-se.pt")
+    google_lines = [preprocess_phonemes(get_swedish_phonemes(x, phonemizer))
+                    for x in google_lines]
+    correct_lines = [preprocess_phonemes(get_swedish_phonemes(x, phonemizer))
+                     for x in correct_lines]
+    kb_lines = [preprocess_phonemes(get_swedish_phonemes(x, phonemizer))
+                for x in kb_lines]
+
     filter = {
         "agreement" : False,
         "kb_correct" : False,
@@ -292,15 +302,15 @@ def multispeaker_eval():
     error_index_overlap = oei / tei
     print("Error index overlap ", error_index_overlap)
 
-    # agreement, g_correct_kb_not, kb_correct_g_not, agreement_not_correct, agreement_correct,\
-    # both_incorrect_disagreement =\
-    #     percentage_of_agreement(correct_lines, google_lines, kb_lines)
-    # print("Agreement ", agreement)
-    # print("g_correct_kb_not " , g_correct_kb_not)
-    # print("kb_correct_g_not ", kb_correct_g_not)
-    # print("agreement_not_correct ", agreement_not_correct)
-    # print("agreement_correct ", agreement_correct)
-    # print("both_incorrect_disagreement ", both_incorrect_disagreement)
+    agreement, g_correct_kb_not, kb_correct_g_not, agreement_not_correct, agreement_correct,\
+    both_incorrect_disagreement =\
+        percentage_of_agreement(correct_lines, google_lines, kb_lines)
+    print("Agreement ", agreement)
+    print("g_correct_kb_not " , g_correct_kb_not)
+    print("kb_correct_g_not ", kb_correct_g_not)
+    print("agreement_not_correct ", agreement_not_correct)
+    print("agreement_correct ", agreement_correct)
+    print("both_incorrect_disagreement ", both_incorrect_disagreement)
 
 
 def evaluate(speaker):
@@ -332,5 +342,7 @@ def evaluate(speaker):
     print("Google WER : ", wer(correct_lines, google_lines))
     print("KB WER : ", wer(correct_lines, kb_lines))
 
+
+
 if __name__ == '__main__':
-    visualize()
+    multispeaker_eval()
