@@ -15,7 +15,12 @@ def get_swedish_phonemes(text, phonemizer):
     """
     phonemes = phonemizer(text, 'se')
     result = ''
+    stress_marks = set()
+    stress_marks.update(["\'", "\"", "`"])
     for i, ph in enumerate(phonemes):
+        # Skip stress marks
+        if ph in stress_marks:
+            continue
         if ph == ' ':
             result = result + '_ '
         if ph not in '23:_ ':
@@ -53,3 +58,10 @@ def init_phonemizer(device, model_path, stress_marks=True):
     phonemizer = Phonemizer(pred, phoneme_dict)
 
     return phonemizer
+
+if __name__ == '__main__':
+    phonemizer = init_phonemizer("cuda", "./models/deep-phonemizer-se.pt",
+                                 stress_marks=True)
+    txt = "Jag heter Nikos"
+    print(get_swedish_phonemes(txt, phonemizer))
+

@@ -24,16 +24,32 @@ def w2id(txt : str):
     return {v: chr(i) for i,v in enumerate(set(txt.split()))}
 
 
-def encode_txt(txt : str, w2id):
+def encode_txt(txt : str, mapping):
     """
     Encodes the given text according to the mapping w2i. txt
     must have been used while creating the w2id
     :param txt: the string to encode
-    :param w2i: word to number mapping
+    :param mapping: word to number mapping
     :return:
     """
-    return "".join([w2id[x] for x in txt.split()])
+    return "".join([mapping[x] for x in txt.split()])
+
+def decode_txt(txt : str, mapping):
+    """
+    Decodes the encoded text created with encode_txt
+     according to the mapping w2i.
+    :param txt: the string to encode
+    :param mapping: word to number mapping
+    :return:
+    """
+    id2w = {v: k for k, v in mapping.items()}
+    return " ".join([id2w[x] for x in txt])
 
 
 def remove_punct(s : str):
+    """
+    Removes punctuationg from the str
+    :param s: the string to remove punctuation
+    :return: unpunctuated string
+    """
     return s.translate(str.maketrans('', '', string.punctuation))
