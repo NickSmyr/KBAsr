@@ -97,28 +97,13 @@ def transcribe_from_audio_path(audio_path, check_language=False, classify_emotio
     if converted:
         os.remove(audio_path)
 
-    if check_language:
-        language = "Swedish"
-        # print("the language is", language)
-        try:
-            model_id = language_dict[language]
-        except KeyError:
-            print(
-                "No language model found for %s. Defaulting to KBLab/wav2vec2-large-voxrex-swedish unless another model was specified." % language)
-            model_id = "KBLab/wav2vec2-large-voxrex-swedish"
-    else:
-        language = "Swedish"
-        try:
-            model_id = language_dict[language]
-        except KeyError:
-            print(
-                "No language model found for %s. Defaulting to KBLab/wav2vec2-large-voxrex-swedish unless another model was specified." % language)
-            model_id = "KBLab/wav2vec2-large-voxrex-swedish"
+    model_id = "birgermoell/lm-swedish"
 
     if model:
         model_id = model
 
     if pipeline == None:
+        print("Using model ", model_id)
         processor = Wav2Vec2Processor.from_pretrained(model_id)
         model = Wav2Vec2ForCTC.from_pretrained(model_id)
     else:
@@ -149,6 +134,7 @@ def transcribe_directory_of_wav_files(dir, output_file, cuda=True):
     directory = dir
     pipeline = None
 
+    # TODO sort output filename
     for file in tqdm(list(os.listdir(directory))):
         filename = file
         if filename.endswith(".wav"):

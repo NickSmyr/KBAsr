@@ -41,8 +41,11 @@ def experiment_repeats(experiment, count: int, *args, **kwargs):
     res = []
     for _ in tqdm(range(count)):
         res.append(experiment(*args, **kwargs))
-    means = {k: mean([dic[k] for dic in res]) for k in res[0]}
-    stds = {k: stdev([dic[k] for dic in res]) for k in res[0]}
+    means = {k: mean([dict[k] for dict in res]) for k in res[0]}
+    if count == 1:      
+        stds = {k: 0 for k in res[0]}
+    else:
+        stds = {k: stdev([dict[k] for dict in res]) for k in res[0]}
     return {k: ExperimentResult(means[k], stds[k]) for k in res[0]}
 
 def print_experiment_report(experiment_output):
