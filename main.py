@@ -1,3 +1,4 @@
+import re
 from functools import reduce
 import Levenshtein
 import librosa
@@ -148,3 +149,40 @@ def transcribe_directory_of_wav_files(dir, output_file, cuda=True):
     with open(output_file, 'w') as f:
         for k,v in filenames2transcriptions.items():
             f.write(k + '\t' + v + '\n')
+
+def transcribe_directory_of_wav_files_return_file_lines(dir, cuda=True):
+    """
+    Output a file with first column being the filename and second
+    column the transcription from TMH
+    :param dir: string path
+    :param output_file: output file path str
+    :return:
+    """
+    filenames2transcriptions = {}
+    directory = dir
+    pipeline = None
+    ret_lines = []
+
+    pbar = tqdm(list(os.listdir(directory)))
+    for file in pbar:
+        filename = file
+        if filename.endswith(".wav"):
+            complete_filename = os.path.join(directory, filename)
+            pbar.set_postfix_str(filename)
+            transcription, processor, model = transcribe_from_audio_path(complete_filename,
+                                                                         pipeline=pipeline, cuda=cuda)
+            if processor != None:
+                pipeline = Pipeline(processor, model)
+            filenames2transcriptions[filename] = transcription
+
+
+    for k,v in filenames2transcriptions.items():
+        ret_lines.append(k + '\t' + v)
+
+    pat = re.compile("file_(\d+)\.wav")
+    lines = sorted(ret_lines, key=lambda x: int(pat.search(x).groups()[0]))
+    return lines
+
+if __name__ == '__main__':
+    res = transcribe_directory_of_wav_files_return_file_lines("/data/sisters/maggan_dialogue/z29")
+    print(res)
