@@ -150,7 +150,7 @@ def transcribe_directory_of_wav_files(dir, output_file, cuda=True):
         for k,v in filenames2transcriptions.items():
             f.write(k + '\t' + v + '\n')
 
-def transcribe_directory_of_wav_files_return_file_lines(dir, cuda=True):
+def transcribe_directory_of_wav_files_return_file_lines(dir, cuda : bool, model_type):
     """
     Output a file with first column being the filename and second
     column the transcription from TMH
@@ -169,7 +169,7 @@ def transcribe_directory_of_wav_files_return_file_lines(dir, cuda=True):
         if filename.endswith(".wav"):
             complete_filename = os.path.join(directory, filename)
             pbar.set_postfix_str(filename)
-            transcription, processor, model = transcribe_from_audio_path(complete_filename,
+            transcription, processor, model = transcribe_from_audio_path(complete_filename, model=model_type,
                                                                          pipeline=pipeline, cuda=cuda)
             if processor != None:
                 pipeline = Pipeline(processor, model)
@@ -177,12 +177,17 @@ def transcribe_directory_of_wav_files_return_file_lines(dir, cuda=True):
 
 
     for k,v in filenames2transcriptions.items():
-        ret_lines.append(k + '\t' + v)
+        ret_lines.append(k + '\t' + v + "\n")
 
     pat = re.compile("file_(\d+)\.wav")
     lines = sorted(ret_lines, key=lambda x: int(pat.search(x).groups()[0]))
     return lines
 
 if __name__ == '__main__':
-    res = transcribe_directory_of_wav_files_return_file_lines("/data/sisters/maggan_dialogue/z29")
+    model_types = [
+        "KBLab/wav2vec2-large-voxrex-swedish",
+        "birgermoell/lm-swedish"
+    ]
+    res = transcribe_directory_of_wav_files_return_file_lines("/data/sisters/maggan_dialogue/z29", True,
+                                                              model_type="birgermoell/lm-swedish")
     print(res)
