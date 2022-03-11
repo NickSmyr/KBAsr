@@ -27,7 +27,7 @@ def read_phoneme_dict(dict_path):
     return mapping
 
 
-def get_swedish_phonemes(texts: Union[str, List[str]], phonemizer, include_stress_marks=True):
+def get_swedish_phonemes(texts: Union[str, List[str]], phonemizer, include_stress_marks=True, batch_size=50):
     """
     Get swedish phonemes, Text must be lowercased
     :param text: The text to phonemize either one example str or a list of strings
@@ -43,10 +43,11 @@ def get_swedish_phonemes(texts: Union[str, List[str]], phonemizer, include_stres
     stress_marks.update(["\'", "\"", "`"])
 
     phoneme_dict = read_phoneme_dict("models/stress_lex_mtm.txt")
-    phonemes = phonemizer(texts, 'se', batch_size=50)
+    phonemes = phonemizer(texts, 'se', batch_size=batch_size)
 
     phonemized_texts = []
 
+    print("Desplitting phonemes and removing stress marks")
     for ti, phonemes_i in zip(texts, phonemes):
         words = ti.split()
         word_idx = 0

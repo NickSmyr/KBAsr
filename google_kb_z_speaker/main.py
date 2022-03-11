@@ -73,7 +73,7 @@ def percentage_of_agreement(bunches, agreement):
         t_g = bunch["google"]
         t_kb = bunch["kb"]
         total += 1
-        if (t_g == t_kb):
+        if t_g == t_kb:
             count_agreement += 1
             if (t_g == t_c):
                 agreement_correct += 1
@@ -100,10 +100,21 @@ def percentage_of_agreement(bunches, agreement):
     return  count_agreement, g_correct_kb_not, kb_correct_g_not, agreement_not_correct, agreement_correct,\
             both_incorrect_disagreement
 
+def get_lcs_str(bunch):
+    splitted = {k: v.split(" ") for k, v in bunch.items()}
+    s = SequenceMatcher(None, splitted["google"], splitted["kb"])
+    lcs = " ".join([" ".join(splitted["google"][block.a:(block.a + block.size)]) for block in s.get_matching_blocks()])
+    return lcs
+
+def agreement_percentage(bunch):
+    splitted = {k: v.split(" ") for k, v in bunch.items()}
+    lcs = get_lcs_str(bunch)
+    return len(lcs.split()) / max(len(splitted["google"]), len(splitted["kb"]))
+
 def bunch_agrees(bunch, threshold):
     """
     Returns true if the bunch agrees with the given
-    percentage. let LCS be the words in the
+    threshhold. let LCS be the words in the
     longest common subsequence of google and kb,
     then the bunch will agree if
         |LCS| / max(googlelen, max(kblen)
@@ -112,13 +123,8 @@ def bunch_agrees(bunch, threshold):
     :param threshold:float deciding the percentance cutoff
     :return: bool
     """
-    splitted = {k : v.split(" ") for k, v in bunch.items()}
-    words_set = set(reduce(lambda x,y : x +y, list(bunch.values())))
-    w2char = {x: chr(i) for i, x in enumerate(words_set)}
-    encoded = {k : "".join([w2char[x] for x in v]) for k,v in splitted.items()}
-    s = SequenceMatcher(None, encoded["google"], encoded["kb"])
-    lcs = ''.join([encoded["google"][block.a:(block.a + block.size)] for block in s.get_matching_blocks()])
-    return True if len(lcs) / max(len(encoded["google"]), len(encoded["kb"])) >= threshold else False
+    perc_agr = agreement_percentage(bunch)
+    return True if  perc_agr >= threshold else False
 
 def filter_bunches(bunches,
                  agreement, kb_correct, g_correct):
@@ -128,7 +134,7 @@ def filter_bunches(bunches,
         t_c = bunch["correct"]
         t_g = bunch["google"]
         t_kb = bunch["kb"]
-        if agreement(bunch):
+        if t_g == t_kb:
             if (t_g == t_c):
                 if agreement and g_correct and kb_correct:
                     c.append(t_c)
