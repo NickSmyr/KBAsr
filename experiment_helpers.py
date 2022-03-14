@@ -1,5 +1,6 @@
 from statistics import mean, stdev
 from tqdm.auto import tqdm
+from itertools import product
 
 
 class ExperimentResult:
@@ -47,6 +48,23 @@ def experiment_repeats(experiment, count: int, *args, **kwargs):
     else:
         stds = {k: stdev([dict[k] for dict in res]) for k in res[0]}
     return {k: ExperimentResult(means[k], stds[k]) for k in res[0]}
+
+def grid(experiment, *args, **kwargs):
+    """
+    Conducts the experiment for the grid of positional arguments,
+    the grid is only over positional arguments kwargs will be input
+    to experiment as is for every run
+    :param experiment: experiment func
+    :param args: a list of list of arguments to perform the grid on
+    :return: A list mapping experiment inputs to experiment outputs
+    for every run
+    """
+    res = []
+    for x in tqdm(list(product(*args))):
+        res.append(experiment(*x, **kwargs))
+    return res
+
+
 
 def print_experiment_report(experiment_output):
     for k,v in experiment_output.items():

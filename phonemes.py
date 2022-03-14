@@ -27,12 +27,31 @@ def read_phoneme_dict(dict_path):
     return mapping
 
 
-def get_swedish_phonemes(texts: Union[str, List[str]], phonemizer, include_stress_marks=True, batch_size=50):
+def unravel_phonemes(texts: Union[str, List[str]]):
+    """
+    :param texts: output of get_swedish_phonemes
+    :return: splitted output on whitespace and underscore
+    """
+    only_one_text = False
+    if type(texts) == str:
+        texts = [texts]
+        only_one_text = True
+
+    res = [x.replace("_", "").split() for x in texts]
+    return res[0] if only_one_text else res
+
+
+def get_swedish_phonemes(texts: Union[str, List[str]], phonemizer, phoneme_dict_path,
+                         include_stress_marks=True, use_dict=False,
+                         batch_size=50):
     """
     Get swedish phonemes, Text must be lowercased
     :param text: The text to phonemize either one example str or a list of strings
     :param phonemizer: The model created with init_phonemizer
-    :return: a list of the swedish phonemes
+    :param use_dict: True if the phonemes must first be generated from the dictionary provided
+    :param phoneme_dict_path: A path to a dictionary mapping words to list of phonemes
+    :return: The phonemes for each text each of which is a List[str] and total returned object
+    is Union[List[str], List[List[str]]
     """
     only_one_text = False
     if type(texts) == str:
@@ -42,7 +61,7 @@ def get_swedish_phonemes(texts: Union[str, List[str]], phonemizer, include_stres
     stress_marks = set()
     stress_marks.update(["\'", "\"", "`"])
 
-    phoneme_dict = read_phoneme_dict("models/stress_lex_mtm.txt")
+    phoneme_dict = read_phoneme_dict(phoneme_dict_path)
     phonemes = phonemizer(texts, 'se', batch_size=batch_size)
 
     phonemized_texts = []
@@ -110,24 +129,48 @@ def preprocess_phonemes(phoneme_str):
 
 
 def init_phonemizer(device, model_path, stress_marks=True):
-    if stress_marks:
-        transformer = model.ForwardTransformer(55, 55,
-                                               d_fft=1024, d_model=512,
-                                               dropout=0.1, heads=4, layers=6)
-    else:
-        transformer = model.ForwardTransformer(55, 52,
-                                               d_fft=1024, d_model=512,
-                                               dropout=0.1, heads=4, layers=6)
+    try:
+        if stress_marks:
+            transformer = model.ForwardTransformer(55, 55,
+                                                   d_fft=1024, d_model=512,
+                                                   dropout=0.1, heads=4, layers=6)
+        else:
+            transformer = model.ForwardTransformer(55, 52,
+                                                   d_fft=1024, d_model=512,
+                                                   dropout=0.1, heads=4, layers=6)
 
-    checkpoint = torch.load(model_path, map_location=device)
-    transformer.load_state_dict(checkpoint['model'])
-    preprocessor = checkpoint['preprocessor']
+        checkpoint = torch.load(model_path, map_location=device)
+        transformer.load_state_dict(checkpoint['model'])
+        preprocessor = checkpoint['preprocessor']
 
-    pred = predictor.Predictor(transformer, preprocessor)
-    phoneme_dict = checkpoint['phoneme_dict']
-    phonemizer = Phonemizer(pred, phoneme_dict)
+        pred = predictor.Predictor(transformer, preprocessor)
+        phoneme_dict = checkpoint['phoneme_dict']
+        phonemizer = Phonemizer(pred, phoneme_dict)
 
-    return phonemizer
+        return phonemizer
+
+    except Exception as e1:
+        pass
+    # Try the second model architecture
+    try:
+        checkpoint = torch.load(model_path, map_location=device)
+        preprocessor = checkpoint['preprocessor']
+
+        transformer = model.AutoregressiveTransformer(52, 77, d_fft=1024, d_model=512,
+                                                      dropout=0.1, heads=4, encoder_layers=4, decoder_layers=4,
+                                                      end_index=preprocessor.phoneme_tokenizer.end_index)
+
+        transformer.load_state_dict(checkpoint['model'])
+
+        pred = predictor.Predictor(transformer, preprocessor)
+        phonemizer = Phonemizer(pred, None)
+
+        return phonemizer
+
+    except Exception as e:
+        print("Could not find a suitable model architecture for the phonemizer at model path:"
+              f"{model_path}", file=sys.stderr)
+        raise e
 
 if __name__ == '__main__':
     phonemizer = init_phonemizer("cuda", "./models/deep-phonemizer-se.pt",

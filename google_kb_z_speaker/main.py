@@ -48,7 +48,7 @@ def file_lines_are_correct(model2speaker_lines):
 
 # Return the clips where both models had the same output transcription
 # and also the percentage of the total clips that had full agreement
-def percentage_of_agreement(bunches, agreement):
+def agreement_stats(bunches):
     """
     Returns percentages in order:
         agreement, correct google while incorrect kb, correct kb while incorrect google,
@@ -103,7 +103,8 @@ def percentage_of_agreement(bunches, agreement):
 def get_lcs_str(bunch):
     splitted = {k: v.split(" ") for k, v in bunch.items()}
     s = SequenceMatcher(None, splitted["google"], splitted["kb"])
-    lcs = " ".join([" ".join(splitted["google"][block.a:(block.a + block.size)]) for block in s.get_matching_blocks()])
+    lcs = " ".join([" ".join(splitted["google"][block.a:(block.a + block.size)]) for block in s.get_matching_blocks()
+                    if block.size > 0])
     return lcs
 
 def agreement_percentage(bunch):
