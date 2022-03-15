@@ -49,19 +49,23 @@ def experiment_repeats(experiment, count: int, *args, **kwargs):
         stds = {k: stdev([dict[k] for dict in res]) for k in res[0]}
     return {k: ExperimentResult(means[k], stds[k]) for k in res[0]}
 
-def grid(experiment, *args, **kwargs):
+def grid(experiment, *args, stub=False, **kwargs):
     """
     Conducts the experiment for the grid of positional arguments,
     the grid is only over positional arguments kwargs will be input
     to experiment as is for every run
+    :param stub: Stubs the process, by executing a dummy experiment at each iteration
     :param experiment: experiment func
     :param args: a list of list of arguments to perform the grid on
-    :return: A list mapping experiment inputs to experiment outputs
-    for every run
+    :return: A list of pairs where is pair is the input to the experiment
+    and the output of the experiment
     """
     res = []
     for x in tqdm(list(product(*args))):
-        res.append(experiment(*x, **kwargs))
+        if stub:
+            res.append((x, {"dummy" : 0}))
+        else:
+            res.append((x,experiment(*x, **kwargs)))
     return res
 
 
