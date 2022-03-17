@@ -8,7 +8,7 @@ from evaluate import error_idxs
 from loadfile import extract_file_idxs_from_lines, get_fname_lines, transcriptions
 import matplotlib.pyplot as plt
 
-from phonemes import get_swedish_phonemes, init_phonemizer, preprocess_phonemes
+from phonemes import get_swedish_phonemes, init_phonemizer
 from preprocess import preprocess_text, w2id, encode_txt, remove_punct
 
 

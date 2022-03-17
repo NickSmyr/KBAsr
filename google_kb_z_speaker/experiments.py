@@ -9,7 +9,7 @@ from evaluate import error_idxs
 from google_kb_z_speaker.main import get_lcs_str, filter_bunches_only_on_agreement, filter_bunches, agreement_stats, \
     bunch_agrees
 from google_kb_z_speaker.preprocessing import get_swedish_phonemes_z, singular_phonemes_preprocess
-from phonemes import init_phonemizer, preprocess_phonemes
+from phonemes import init_phonemizer
 from seqmatch import blocks
 
 import numpy as np
@@ -18,8 +18,8 @@ import numpy as np
 def preprocess(bunches, phonemizer, _filter, phoneme_words, singular_phonemes, preprocess_hook, stress_marks):
     if phoneme_words:
         bunches = get_swedish_phonemes_z(bunches, phonemizer, stress_marks=stress_marks)
-        #
-        bunches = {k: [preprocess_phonemes(x) for x in v] for k, v in bunches.items()}
+        # TODO backwards compatibility break
+        #bunches = {k: [process_phonemizer_output(x) for x in v] for k, v in bunches.items()}
 
     if singular_phonemes:
         bunches = get_swedish_phonemes_z(bunches, phonemizer, stress_marks=stress_marks)
@@ -146,8 +146,7 @@ def meval(bunches,phonemizer_path , _filter=None, phoneme_words=None, singular_p
         return {**res}
 
 
-def ensemble(phonemizer_path, ratio_threshold, bunches=None, device=None):
-    phonemizer = init_phonemizer(device if device else "cuda", phonemizer_path, stress_marks=True)
+def ensemble(phonemizer, ratio_threshold, bunches=None, device=None, use_phonemizer=None):
     bunch_list = [{k: bunches[k][i] for k in bunches} for i in range(len([x for x in bunches.values()][0]))]
     ensemble_outputs = []
     for bunch in tqdm(bunch_list):
@@ -155,13 +154,16 @@ def ensemble(phonemizer_path, ratio_threshold, bunches=None, device=None):
         selected_blocks = []
         for i, p in enumerate(block_list):
             if i in unmatched_idxs:
-                phonemized_block_pair = phonemizer([p[0], p[1], " ".join([p[0], p[1]])], "se")
-                ratio = SequenceMatcher(None, phonemized_block_pair[0], phonemized_block_pair[1]).ratio()
+                if use_phonemizer:
+                    phonemized_block_pair = phonemizer([p[0], p[1], " ".join([p[0], p[1]])], "se")
+                    ratio = SequenceMatcher(None, phonemized_block_pair[0], phonemized_block_pair[1]).ratio()
+                else:
+                    ratio = SequenceMatcher(None, p[0], p[1]).ratio()
                 if ratio > ratio_threshold:
                     # There is large similarity choose google
                     selected_blocks.append(p[0])
                 else:
-                    # Very disimilar choose google
+                    # Very disimilar choose kb
                     selected_blocks.append(p[1])
             else:
                 selected_blocks.append(p[1])

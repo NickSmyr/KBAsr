@@ -40,6 +40,45 @@ def unravel_phonemes(texts: Union[str, List[str]]):
     res = [x.replace("_", "").split() for x in texts]
     return res[0] if only_one_text else res
 
+def phonemizer_wrapper(phonemizer, phoneme_dict=None, include_stress_marks=None):
+    def phonemizer_to_return(texts : Union[str, List[str]], lang):
+        only_one_text = False
+        if type(texts) == str:
+            texts = [texts]
+            only_one_text = True
+        phonemized_texts = phonemizer(texts, lang)
+
+        # Mapping non OOV words to their phoneme lists
+        if phoneme_dict:
+            splitted_phonemes = [x.split() for x in phonemized_texts]
+            splitted_texts = [x.split() for x in texts]
+
+            final_texts = []
+            for phoneme_word_list, word_list in zip(splitted_phonemes, splitted_texts):
+                # TODO fix this
+                assert len(phoneme_word_list) == len(word_list), "A critical phonemizer regularity was violated with " \
+                                                                 "the input sequence being: " + str(word_list)
+                final_phoneme_words = []
+                for phoneme_word, word in zip(phoneme_word_list, word_list):
+                    if word in phoneme_dict:
+                        final_phoneme_words.append("".join(phoneme_dict[word]))
+                    else:
+                        final_phoneme_words.append(phoneme_word)
+
+                final_texts.append(" ".join(final_phoneme_words))
+            phonemized_texts = final_texts
+
+        # Removing stress marks
+        if not include_stress_marks:
+            stress_marks = set()
+            stress_marks.update(["\'", "\"", "`"])
+            phonemized_texts = [x.translate({ord(c):None for c in stress_marks}) for x in phonemized_texts]
+
+        # Return result
+        return phonemized_texts[0] if only_one_text else phonemized_texts
+
+
+    return phonemizer_to_return
 
 def get_swedish_phonemes(texts: Union[str, List[str]], phonemizer, phoneme_dict_path,
                          include_stress_marks=True, use_dict=False,
@@ -118,14 +157,7 @@ def get_swedish_phonemes(texts: Union[str, List[str]], phonemizer, phoneme_dict_
 
     return phonemized_texts[0] if only_one_text else phonemized_texts
 
-def preprocess_phonemes(phoneme_str):
-    """
-    Transforms a phoneme str eg "j ' a2: _ h ' e2: t ë r _ n ' i k å s"
-    to more like a txt str "j'a2: h'e2:tër n'ikås"
-    :param phoneme_str:
-    :return:
-    """
-    return " ".join(phoneme_str.replace(" ", "").split("_"))
+
 
 
 def init_phonemizer(device, model_path, stress_marks=True):

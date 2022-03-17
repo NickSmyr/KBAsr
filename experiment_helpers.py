@@ -49,7 +49,7 @@ def experiment_repeats(experiment, count: int, *args, **kwargs):
         stds = {k: stdev([dict[k] for dict in res]) for k in res[0]}
     return {k: ExperimentResult(means[k], stds[k]) for k in res[0]}
 
-def grid(experiment, *args, stub=False, **kwargs):
+def grid(experiment, args, kwargs, stub=False):
     """
     Conducts the experiment for the grid of positional arguments,
     the grid is only over positional arguments kwargs will be input
@@ -57,6 +57,7 @@ def grid(experiment, *args, stub=False, **kwargs):
     :param stub: Stubs the process, by executing a dummy experiment at each iteration
     :param experiment: experiment func
     :param args: a list of list of arguments to perform the grid on
+    :params kwargs: keyword arguments to pass to experiment
     :return: A list of pairs where is pair is the input to the experiment
     and the output of the experiment
     """
