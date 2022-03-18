@@ -169,4 +169,5 @@ def ensemble(phonemizer, ratio_threshold, bunches=None, device=None, use_phonemi
                 selected_blocks.append(p[1])
         ensemble_output = " ".join(selected_blocks)
         ensemble_outputs.append(ensemble_output)
-    return {**google_kb_wer(bunches), "ensemble-wer": wer(bunches["correct"], ensemble_outputs)}
+    return {**google_kb_wer(bunches), "ensemble-wer": wer(bunches["correct"], ensemble_outputs),
+            "ensemble_outputs": ensemble_outputs}
