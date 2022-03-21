@@ -1,9 +1,12 @@
 from typing import Union, List
 
+from dp.model.predictor import Predictor
 from dp.phonemizer import Phonemizer
 from dp.model import model, predictor
 import torch
-import sys 
+import sys
+
+
 # this model needs a download of the model.
 ## Please download this model and put it in the following folder.
 ## https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt
@@ -40,13 +43,14 @@ def unravel_phonemes(texts: Union[str, List[str]]):
     res = [x.replace("_", "").split() for x in texts]
     return res[0] if only_one_text else res
 
-def phonemizer_wrapper(phonemizer, phoneme_dict=None, include_stress_marks=None):
-    def phonemizer_to_return(texts : Union[str, List[str]], lang):
+
+def phonemizer_wrapper(phonemizer: Phonemizer, phoneme_dict=None, include_stress_marks=None, batch_size=8) -> Phonemizer:
+    def phonemizer_to_return(texts: Union[str, List[str]], lang):
         only_one_text = False
         if type(texts) == str:
             texts = [texts]
             only_one_text = True
-        phonemized_texts = phonemizer(texts, lang)
+        phonemized_texts = phonemizer(texts, lang, batch_size=batch_size)
 
         # Mapping non OOV words to their phoneme lists
         if phoneme_dict:
@@ -56,29 +60,32 @@ def phonemizer_wrapper(phonemizer, phoneme_dict=None, include_stress_marks=None)
             final_texts = []
             for phoneme_word_list, word_list in zip(splitted_phonemes, splitted_texts):
                 # TODO fix this
-                assert len(phoneme_word_list) == len(word_list), "A critical phonemizer regularity was violated with " \
-                                                                 "the input sequence being: " + str(word_list)
-                final_phoneme_words = []
-                for phoneme_word, word in zip(phoneme_word_list, word_list):
-                    if word in phoneme_dict:
-                        final_phoneme_words.append("".join(phoneme_dict[word]))
-                    else:
-                        final_phoneme_words.append(phoneme_word)
+                if len(phoneme_word_list) == len(word_list):
+                    final_phoneme_words = []
+                    for phoneme_word, word in zip(phoneme_word_list, word_list):
+                        if word in phoneme_dict:
+                            final_phoneme_words.append("".join(phoneme_dict[word]))
+                        else:
+                            final_phoneme_words.append(phoneme_word)
+                    final_texts.append(" ".join(final_phoneme_words))
+                else:
+                    print("A critical phonemizer regularity was violated with the input sequence being: " +
+                          str(word_list), "phonemizer output has not been processed", file=sys.stderr)
+                    final_texts.append(" ".join(phoneme_word_list))
 
-                final_texts.append(" ".join(final_phoneme_words))
             phonemized_texts = final_texts
 
         # Removing stress marks
         if not include_stress_marks:
             stress_marks = set()
             stress_marks.update(["\'", "\"", "`"])
-            phonemized_texts = [x.translate({ord(c):None for c in stress_marks}) for x in phonemized_texts]
+            phonemized_texts = [x.translate({ord(c): None for c in stress_marks}) for x in phonemized_texts]
 
         # Return result
         return phonemized_texts[0] if only_one_text else phonemized_texts
 
-
     return phonemizer_to_return
+
 
 def get_swedish_phonemes(texts: Union[str, List[str]], phonemizer, phoneme_dict_path,
                          include_stress_marks=True, use_dict=False,
@@ -158,8 +165,6 @@ def get_swedish_phonemes(texts: Union[str, List[str]], phonemizer, phoneme_dict_
     return phonemized_texts[0] if only_one_text else phonemized_texts
 
 
-
-
 def init_phonemizer(device, model_path, stress_marks=True):
     try:
         if stress_marks:
@@ -185,12 +190,15 @@ def init_phonemizer(device, model_path, stress_marks=True):
         pass
     # Try the second model architecture
     try:
+
         checkpoint = torch.load(model_path, map_location=device)
         preprocessor = checkpoint['preprocessor']
 
         transformer = model.AutoregressiveTransformer(52, 77, d_fft=1024, d_model=512,
                                                       dropout=0.1, heads=4, encoder_layers=4, decoder_layers=4,
                                                       end_index=preprocessor.phoneme_tokenizer.end_index)
+        checkpoint = torch.load(model_path, map_location=device)
+        preprocessor = checkpoint['preprocessor']
 
         transformer.load_state_dict(checkpoint['model'])
 
@@ -204,11 +212,12 @@ def init_phonemizer(device, model_path, stress_marks=True):
               f"{model_path}", file=sys.stderr)
         raise e
 
+
 if __name__ == '__main__':
     phonemizer = init_phonemizer("cuda", "./models/deep-phonemizer-se.pt",
                                  stress_marks=True)
     txt = [
         "jag heter nikos",
         "hallå nikos trevligt att träffas"
-        ]
+    ]
     print(get_swedish_phonemes(txt, phonemizer))

@@ -1,6 +1,7 @@
 from difflib import SequenceMatcher
 from functools import partial
 from statistics import mean
+from typing import Dict, List, Union, Tuple
 
 from jiwer import wer
 from tqdm.auto import tqdm
@@ -146,16 +147,61 @@ def meval(bunches,phonemizer_path , _filter=None, phoneme_words=None, singular_p
         return {**res}
 
 
-def ensemble(phonemizer, ratio_threshold, bunches=None, device=None, use_phonemizer=None):
+def ensemble(phonemizer, ratio_threshold, bunches=None, use_phonemizer=None):
+    ensemble_outputs = get_ensemble_output(bunches, phonemizer, ratio_threshold, use_phonemizer)
+    return {**google_kb_wer(bunches), "ensemble-wer": wer(bunches["correct"], ensemble_outputs),
+            "ensemble_outputs": ensemble_outputs}
+
+
+def get_ensemble_output(bunches : Union[Dict[str, str], Dict[str, List[str]]], phonemizer, ratio_threshold: float,
+                        use_phonemizer : bool):
+    """
+    Return the ensemble output
+    :param bunches: either a single bunch or all the bunches (model2transcriptions)
+    :return:
+    """
+    only_one_example = False
+    if type(bunches[list(bunches.keys())[0]]) == str:
+        bunches = { k:[v] for k,v in bunches.items()}
+        only_one_example = True
+
     bunch_list = [{k: bunches[k][i] for k in bunches} for i in range(len([x for x in bunches.values()][0]))]
-    ensemble_outputs = []
-    for bunch in tqdm(bunch_list):
-        block_list, unmatched_idxs = blocks(bunch["google"], bunch["kb"])
+
+    block_list_unmatched_idxs_tuple_list : List[Tuple[List[Tuple[str,str]], List[int]]] = [
+        blocks(bunch["google"], bunch["kb"]) for bunch in bunch_list
+    ]
+    selected_blocks = []
+    # In order to optimize the gpu usage we need to only do 1 call to the phonemizer
+    # For this we need to flatten all the unmatched block pairs and generate a locator (i,ii)
+    # So we can recover the phonemized pairs when we have example_index (i), and block_index(ii)
+
+    # By using this vectorization we can achieve 12x speedup
+
+    # Here unmatched block pair index is the index of one unmatched block pair inside the flattened array
+    # of all unmatched blocks
+    unmatched_blocks : List[str] = []
+    locator2unmatched_block_pair_index = {}
+
+    for i,p in enumerate(block_list_unmatched_idxs_tuple_list):
+        block_list, unmatched_idxs = p
+        for ii, pp in enumerate(block_list):
+            # Add unmatched plock pair to array
+            if ii in unmatched_idxs:
+                unmatched_blocks.append(pp[0])
+                unmatched_blocks.append(pp[1])
+                locator2unmatched_block_pair_index[(i,ii)] = (len(unmatched_blocks) - 2, len(unmatched_blocks) - 1)
+
+    phonemized_unmatched_blocks = phonemizer(unmatched_blocks, "se")
+    ensemble_output = []
+    for i,block_list_unmatched_idxs_tuple in enumerate(block_list_unmatched_idxs_tuple_list):
+        block_list, unmatched_idxs = block_list_unmatched_idxs_tuple
         selected_blocks = []
-        for i, p in enumerate(block_list):
-            if i in unmatched_idxs:
+        for ii, p in enumerate(block_list):
+            if ii in unmatched_idxs:
                 if use_phonemizer:
-                    phonemized_block_pair = phonemizer([p[0], p[1], " ".join([p[0], p[1]])], "se")
+                    phonemized_block_pair_idxs = locator2unmatched_block_pair_index[(i,ii)]
+                    phonemized_block_pair = phonemized_unmatched_blocks[phonemized_block_pair_idxs[0]],\
+                                            phonemized_unmatched_blocks[phonemized_block_pair_idxs[1]],
                     ratio = SequenceMatcher(None, phonemized_block_pair[0], phonemized_block_pair[1]).ratio()
                 else:
                     ratio = SequenceMatcher(None, p[0], p[1]).ratio()
@@ -163,11 +209,14 @@ def ensemble(phonemizer, ratio_threshold, bunches=None, device=None, use_phonemi
                     # There is large similarity choose google
                     selected_blocks.append(p[0])
                 else:
-                    # Very disimilar choose kb
+                    # Very dissimilar choose kb
                     selected_blocks.append(p[1])
             else:
                 selected_blocks.append(p[1])
-        ensemble_output = " ".join(selected_blocks)
-        ensemble_outputs.append(ensemble_output)
-    return {**google_kb_wer(bunches), "ensemble-wer": wer(bunches["correct"], ensemble_outputs),
-            "ensemble_outputs": ensemble_outputs}
+        ensemble_output.append(" ".join(selected_blocks))
+
+    return ensemble_output[0] if only_one_example else ensemble_output
+
+def get_kb_google_unmatched_blocks(bunch):
+    block_list, unmatched_idxs = blocks(bunch["google"], bunch["kb"])
+    return [x for i,x in enumerate(block_list) if i in unmatched_idxs]
