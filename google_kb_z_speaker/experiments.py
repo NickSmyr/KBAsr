@@ -147,10 +147,13 @@ def meval(bunches,phonemizer_path , _filter=None, phoneme_words=None, singular_p
         return {**res}
 
 
-def ensemble(phonemizer, ratio_threshold, bunches=None, use_phonemizer=None):
+def ensemble(phonemizer, ratio_threshold, bunches=None, use_phonemizer=None, save_ensemble_output=None):
     ensemble_outputs = get_ensemble_output(bunches, phonemizer, ratio_threshold, use_phonemizer)
-    return {**google_kb_wer(bunches), "ensemble-wer": wer(bunches["correct"], ensemble_outputs),
-            "ensemble_outputs": ensemble_outputs}
+    res = {**google_kb_wer(bunches), "ensemble-wer": wer(bunches["correct"], ensemble_outputs)}
+    if save_ensemble_output:
+        res = {**res, "ensemble_output" : ensemble_outputs}
+    return res
+
 
 
 def get_ensemble_output(bunches : Union[Dict[str, str], Dict[str, List[str]]], phonemizer, ratio_threshold: float,

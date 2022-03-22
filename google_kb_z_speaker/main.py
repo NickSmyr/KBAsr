@@ -29,6 +29,7 @@ def fix_lines(model2speaker_lines):
     extra_idxs = nums["kb"] - nums["correct"]
 
     # Filter extra google,kb lines
+    print("Found extra lines in kb model outputs which are going to be deleted", sorted(list(extra_idxs)))
     for fi in sorted(list(extra_idxs), reverse=True):
         # if idx < len(google_lines):
         #    del google_lines[idx]

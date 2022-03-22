@@ -1,3 +1,4 @@
+import os
 from functools import reduce
 
 from google_kb_z_speaker.main import fix_lines
@@ -29,7 +30,7 @@ def get_swedish_phonemes_z(bunches, phonemizer,stress_marks=True):
 
 # Speaker
 
-def get_bunches(transcriptions_path):
+def get_bunches(transcriptions_path, speechType="dialogue"):
     """
     Parses directory of kb-google-z data and generates the bunches object. The bunches object is
     Dict[str,List[str]] where the keys are the models ("google", "correct", "kb") and the values are
@@ -40,7 +41,16 @@ def get_bunches(transcriptions_path):
 
     :return: The bunches object
     """
-    speakers = ["z21", "z20", "z28", "z29"]
+    if speechType == "maggan_dialogue":
+        speakers = ["z21", "z20", "z28", "z29"]
+    elif speechType == "maggan_read":
+        speakers = set([x.split(".")[0] for x in os.listdir(os.path.join("transcriptions", speechType))])
+    else:
+        raise Exception("Speech type must be one of [maggan_dialogue, maggan_read]")
+
+    print("====Loading data====")
+    print(f"Speech type : {speechType} detected speakers {speakers}")
+
     models = ["google", "correct", "kb"]
     models2fnameendings = {
         "google": "googleasr",
@@ -48,12 +58,9 @@ def get_bunches(transcriptions_path):
         "kb": "kb"
     }
     # Create filenames model -> List[List[str]] (List[str] are the lines from one filename
-    fnames = {model: [f"{transcriptions_path}/{sp}.{models2fnameendings[model]}" for sp in speakers]
+    fnames = {model: [f"{transcriptions_path}/{speechType}/{sp}.{models2fnameendings[model]}" for sp in speakers]
               for model in models}
     bunches = {model: [get_fname_lines(fname) for fname in fnames] for model, fnames in fnames.items()}
-    # speakerLines : List[str]
-    # bunch List[speakerLines]
-    # bunches Dict[model, List[speakerLines]]
     # Create a list [Dict[model,speakerlines] for speaker]
     list_of_model2speaker_lines = [{model: bunch[i] for model, bunch in bunches.items()} for i in range(len(speakers))]
     [fix_lines(x) for x in list_of_model2speaker_lines]

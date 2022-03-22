@@ -98,7 +98,7 @@ def transcribe_from_audio_path(audio_path, check_language=False, classify_emotio
     if converted:
         os.remove(audio_path)
 
-    model_id = "birgermoell/lm-swedish"
+    model_id = "KBLab/wav2vec2-large-voxrex-swedish"
 
     if model:
         model_id = model
@@ -139,16 +139,23 @@ def transcribe_directory_of_wav_files(dir, output_file, cuda=True):
     for file in tqdm(list(os.listdir(directory))):
         filename = file
         if filename.endswith(".wav"):
-            complete_filename = str(directory) + str(filename)
+            complete_filename = os.path.join(directory, filename)
             print("Transcribing file ", complete_filename)
-            transcription, processor, model = transcribe_from_audio_path(str(directory) + str(filename),
+            transcription, processor, model = transcribe_from_audio_path(complete_filename,
                                                                          pipeline=pipeline, cuda=cuda)
             if processor != None:
                 pipeline = Pipeline(processor, model)
             filenames2transcriptions[filename] = transcription
+
+    ret_lines = []
+    for k,v in filenames2transcriptions.items():
+        ret_lines.append(k + '\t' + v + "\n")
+
+    pat = re.compile("file_(\d+)\.wav")
+    lines = sorted(ret_lines, key=lambda x: int(pat.search(x).groups()[0]))
+
     with open(output_file, 'w') as f:
-        for k,v in filenames2transcriptions.items():
-            f.write(k + '\t' + v + '\n')
+        f.writelines(lines)
 
 def transcribe_directory_of_wav_files_return_file_lines(dir, cuda : bool, model_type):
     """
