@@ -1,2 +1,5 @@
 .models
 *.pyc
+.idea
+.ipynb_checkpoints
+.pt

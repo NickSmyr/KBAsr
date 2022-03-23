@@ -194,7 +194,11 @@ def get_ensemble_output(bunches : Union[Dict[str, str], Dict[str, List[str]]], p
                 unmatched_blocks.append(pp[1])
                 locator2unmatched_block_pair_index[(i,ii)] = (len(unmatched_blocks) - 2, len(unmatched_blocks) - 1)
 
-    phonemized_unmatched_blocks = phonemizer(unmatched_blocks, "se")
+    if use_phonemizer:
+        phonemized_unmatched_blocks = phonemizer(unmatched_blocks, "se")
+    else:
+        phonemized_unmatched_blocks = None
+
     ensemble_output = []
     for i,block_list_unmatched_idxs_tuple in enumerate(block_list_unmatched_idxs_tuple_list):
         block_list, unmatched_idxs = block_list_unmatched_idxs_tuple

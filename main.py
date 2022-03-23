@@ -98,15 +98,10 @@ def transcribe_from_audio_path(audio_path, check_language=False, classify_emotio
     if converted:
         os.remove(audio_path)
 
-    model_id = "KBLab/wav2vec2-large-voxrex-swedish"
-
-    if model:
-        model_id = model
-
     if pipeline == None:
-        print("Using model ", model_id)
-        processor = Wav2Vec2Processor.from_pretrained(model_id)
-        model = Wav2Vec2ForCTC.from_pretrained(model_id)
+        print("Using model ", model)
+        processor = Wav2Vec2Processor.from_pretrained(model)
+        model = Wav2Vec2ForCTC.from_pretrained(model)
     else:
         processor = pipeline.processor
         model = pipeline.model
@@ -123,7 +118,7 @@ def transcribe_from_audio_path(audio_path, check_language=False, classify_emotio
     # print(transcription)
     return transcription[0], processor, model
 
-def transcribe_directory_of_wav_files(dir, output_file, cuda=True):
+def transcribe_directory_of_wav_files(dir, output_file, cuda=True, model_type=None):
     """
     Output a file with first column being the filename and second
     column the transcription from TMH
@@ -142,7 +137,8 @@ def transcribe_directory_of_wav_files(dir, output_file, cuda=True):
             complete_filename = os.path.join(directory, filename)
             print("Transcribing file ", complete_filename)
             transcription, processor, model = transcribe_from_audio_path(complete_filename,
-                                                                         pipeline=pipeline, cuda=cuda)
+                                                                         pipeline=pipeline, cuda=cuda,
+                                                                         model=model_type)
             if processor != None:
                 pipeline = Pipeline(processor, model)
             filenames2transcriptions[filename] = transcription
