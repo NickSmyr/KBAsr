@@ -60,44 +60,31 @@ function handleKeyDownOnInput(e){
       }
   }
 // A Pair of blocks that contain the transcriptions from both models, the swap button and the final text input
-class Block extends React.Component {
-  constructor(props) {
-      super(props);
-      this.transcr1 = props.transcr1
-      this.transcr2 = props.transcr2
-      this.state = {kbSelected : true}
-      this.handleSwapClick.bind(this)
-  }
-  handleSwapClick(e){
-      this.setState({kbSelected : ! this.state.kbSelected})
-  }
-
-  render() {
+// Props transcr1, transcr2, kbSelected, onclick, selectedTranscription
+function Block(props){
     let blocks;
     var swapButtonHidden = true
     // TODO refactor this
-    var userPrompt
-    if (this.state.kbSelected){
-        if (this.transcr1 === this.transcr2){
-            blocks = <BlockTranscription selected txt={this.transcr1}/>
+    var userPrompt = props.selectedTranscription
+    if (props.kbSelected){
+        if (props.transcr1 === props.transcr2){
+            blocks = <BlockTranscription selected txt={props.transcr1}/>
         }
         else{
             swapButtonHidden = false
-            blocks = <><BlockTranscription txt={this.transcr1}/><BlockTranscription selected txt={this.transcr2}/></>
+            blocks = <><BlockTranscription txt={props.transcr1}/><BlockTranscription selected txt={props.transcr2}/></>
         }
-        userPrompt = this.transcr2
     }
     else {
-        if (this.transcr1 === this.transcr2){
-            blocks = <BlockTranscription selected txt={this.transcr1}/>
+        if (props.transcr1 === props.transcr2){
+            blocks = <BlockTranscription selected txt={props.transcr1}/>
         }
         else{
             swapButtonHidden = false
-            blocks = <><BlockTranscription selected txt={this.transcr1}/><BlockTranscription txt={this.transcr2}/></>
+            blocks = <><BlockTranscription selected txt={props.transcr1}/><BlockTranscription txt={props.transcr2}/></>
         }
-        userPrompt = this.transcr1
     }
-
+        //console.log("Props on change ", props.onChange)
     // Row grid contains transcription blocks, swap buttin and text input
       return <div style={{
           display: "grid"
@@ -120,24 +107,40 @@ class Block extends React.Component {
               justifyContent: "center",
               alignItems: "center"
           }}>
-              <SwapButton hidden={swapButtonHidden} onclick={this.handleSwapClick.bind(this)}></SwapButton>
+              <SwapButton hidden={swapButtonHidden} onclick={props.onclick}/>
           </div>
           <div style={{
               display: "flex",
               justifyContent: "center",
               alignItems: "center"
           }}>
-                  <p contentEditable={"true"} onKeyDown={handleKeyDownOnInput.bind(this)} style={{
+              <div style={{
+                  overflow: "hidden",
+                  float: "none",
+                  width: "8em"
+              }}>
+                  <input contentEditable={"true"} style={{
                       gridRow: 3,
                       border: "2px solid",
-                      padding: "8px"
-              }}>{userPrompt}</p>
+                      padding: "8px",
+                      margin: "5px",
+                      textAlign: "center",
+                      overflow: "hidden",
+                  }} onKeyDown={(e) => {
+                      if (e.code === "Enter"){
+                          e.preventDefault()
+                          props.onSubmit()
+                      }
+                  }} onInput={props.onChange}
+                     suppressContentEditableWarning={true}
+                     value={userPrompt}
+                  />
+              </div>
           </div>
 
     </div>
   }
-}
-function SubmitButton(){
+function SubmitButton(props){
     return (
         <button style={{
             backgroundColor: "lightgreen",
@@ -145,40 +148,105 @@ function SubmitButton(){
             borderRadius: "5px",
             width: "100px",
             height: "50px",
-        }}>Submit</button>
+        }}
+                onClick={props.onSubmit}
+        >Submit</button>
     );
 }
 
-function Annotate() {
-  return (<>
+// Annotation screen component. Data arguments are blocks (transcription blocks)
+// And when submitting it should make a post request to the backend with the result
+class Annotate extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            googleBlocks : props.blocks.map((x) => x[0]),
+            kbBlocks : props.blocks.map((x) => x[1]),
+            selectedTranscriptions : props.blocks.map((x) => x[1]),
+            kbSelected : props.blocks.map((x) => true)
+        }
+        this.onSubmit = this.onSubmit.bind(this)
+        this.handleChange = this.handleChange.bind(this)
+    }
+
+    onSubmit(){
+        var selectedTranscription = this.state.selectedTranscriptions.join(" ")
+        alert("Received response: " + selectedTranscription)
+    }
+    // Handles the change of event e at block index i
+    handleChange(e, i){
+        console.log("Inside handle Change with params ", e,i)
+        this.setState(prevState => {
+            var newTr = [...prevState.selectedTranscriptions]
+            if (!e.target.value){
+              newTr[i] = e.target.innerText
+            }
+            else {
+              newTr[i] = e.target.value
+            }
+            console.log("Target innerText ", e.target.innerText)
+            console.log("Target value ", e.target.value)
+            console.log("Target innerHTML ", e.target.innerHTML)
+
+            return {selectedTranscriptions: newTr}
+        })
+    }
+
+    render(){
+      return (<>
           <ReactAudioPlayer
-  src="https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav"
-  controls
-/>
-    <div style={{
-        display:"flex",
-        flexDirection:"row"
-    }}
-         onKeyDown={handleKeyDownOnInput}
-    >
-        <div style={{
-            padding: "5px",
-            margin: "5px",
-            textAlign: "center"
-        }}>
-            <p>Google ASR</p>
-            <p>KB ASR</p>
-        </div>
-        <Block transcr1={"nya stället"} transcr2={"vi gör så rätt"}/>
-        <Block transcr1={"mats"} transcr2={"mats"}/>
-        <Block transcr1={"eller"} transcr2={"håller"}/>
-        <Block transcr1={"ordning"} transcr2={"ordning"}/>
-    </div>
-      <SubmitButton></SubmitButton>
-      </>
+              src="https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav"
+              controls
+          />
+            <div style={{
+                display:"flex",
+                flexDirection:"row"
+            }}
+            >
+                <div style={{
+                    padding: "5px",
+                    margin: "5px",
+                    textAlign: "center"
+                }}>
+                    <p>Google ASR</p>
+                    <p>KB ASR</p>
+                </div>
+                {
+                    this.state.googleBlocks.map((e,i)=>{
+                        var blockOnClick = (e) => {
+                            this.setState(prevState => {
+                                var newKbselected = [...prevState.kbSelected]
+                                newKbselected[i] = !newKbselected[i]
+                                var newSelectedTranscriptions = [...prevState.selectedTranscriptions];
+                                if (newKbselected[i]){
+                                    newSelectedTranscriptions[i] = this.state.kbBlocks[i]
+                                }
+                                else{
+                                    newSelectedTranscriptions[i] = this.state.googleBlocks[i]
+                                }
+                                return {kbSelected : newKbselected,
+                                    selectedTranscriptions: newSelectedTranscriptions
+                                }
+                            })
+                        }
+                        return <Block transcr1={this.state.googleBlocks[i]} transcr2={this.state.kbBlocks[i]}
+                                      kbSelected={this.state.kbSelected[i]} onclick={blockOnClick.bind(this)}
+                                      selectedTranscription={this.state.selectedTranscriptions[i]}
+                                      onSubmit={this.onSubmit} onChange={(e)=>{
+                                          console.log("Handling change")
+                                          return this.handleChange(e,i)
+                        }}
+                        />
+                    })
+                }
+            </div>
+              <SubmitButton onSubmit={this.onSubmit}/>
+              </>
+    );
+    }
 
-
-  );
 }
-
+function submitResponse(txt){
+    console.log("Submitting response ", txt)
+}
 export default Annotate;

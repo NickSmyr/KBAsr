@@ -14,7 +14,14 @@ import Annotate from "./Annotate";
 
 ReactDOM.render(
   <React.StrictMode>
-    <Annotate />
+    <Annotate blocks={
+        [
+            ["nya stället", "vi gör så rätt"],
+            ["mats", "mats"],
+            ["eller", "håller"],
+            ["ordning", "ordning"]
+        ]
+    }/>
   </React.StrictMode>,
   document.getElementById('root')
 );
