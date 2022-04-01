@@ -12,16 +12,35 @@ import Annotate from "./Annotate";
 //   document.getElementById('root')
 // );
 
+function onSubmit(str){
+    alert("Received response: " + str)
+}
+
 ReactDOM.render(
   <React.StrictMode>
     <Annotate blocks={
-        [
-            ["nya stället", "vi gör så rätt"],
-            ["mats", "mats"],
-            ["eller", "håller"],
-            ["ordning", "ordning"]
-        ]
-    }/>
+            [
+                ["nya stället", "vi gör så rätt"],
+                ["mats", "mats"],
+                ["eller", "håller"],
+                ["ordning", "ordning"],
+                ["nya stället", "vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt"],
+                ["eller", "håller"],
+                ["ordning", "ordning"],
+                ["nya stället", "vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt"],
+                ["eller", "håller"],
+                ["ordning", "ordning"],
+                ["nya stället", "vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt"],
+                ["eller", "håller"],
+                ["ordning", "ordning"],
+                ["nya stället", "vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt"],
+            ]
+        }
+              onSubmit={onSubmit}
+              blockEndTimes={[
+                  1,2,3,4,5,6,7,8,9,10,11,12,13,14
+              ]}
+    />
   </React.StrictMode>,
   document.getElementById('root')
 );
