@@ -15,6 +15,7 @@ import {grey} from "@mui/material/colors";
 import ReactAudioPlayer from 'react-audio-player';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
+import ReplayCircleFilledIcon from '@mui/icons-material/ReplayCircleFilled';
 
 
 // A block that hold the transcription from a model
@@ -59,6 +60,13 @@ function SwapButton(props){
 function UserPromptBlock(props){
     var progress = props.progress
     var progressPercentStr = Math.round(progress * 100).toString()
+    var repeatStyle = {}
+    if (props.blockRepeated){
+        repeatStyle={
+            border: "2px solid",
+            borderColor: "blue"
+        }
+    }
     return (
         <div style={{
             backgroundColor: "lightgrey",
@@ -69,8 +77,9 @@ function UserPromptBlock(props){
             width: "auto",
             gridTemplateColumns: "max-content",
             position: "relative",
-            zIndex: -1
-        }}>
+            zIndex: -1,
+        }}
+        >
             <div style={{
                 backgroundColor: "lightgreen",
                 position: "absolute",
@@ -78,22 +87,34 @@ function UserPromptBlock(props){
                 width: progressPercentStr + "%",
                 zIndex: 0,
                 borderRadius: "10px",
-            }}>
+            }}
+            >
 
             </div>
             <div style={{
                 display: "flex",
+                zIndex: "99"
             }}>
-                <button style={{
-                    zIndex:50
-                }} onClick={() => console.log("Henlo")}>
-                    FGUASD
-
+                <button tabIndex={-1} onClick={(e) => props.onPlay()}>
+                    <PlayCircleIcon sx={{
+                        zIndex: 1
+                        }}
                     />
                 </button>
-                <PauseCircleIcon sx={{
-                    zIndex: 1
-                }}/>
+
+                <button tabIndex={-1} onClick={(e) => props.onPause()}>
+                    <PauseCircleIcon sx={{
+                        zIndex: 1
+                        }}
+                    />
+                </button>
+
+                <button style={repeatStyle} tabIndex={-1} onClick={(e) => props.onRepeat()}>
+                    <ReplayCircleFilledIcon sx={{
+                        zIndex: 1
+                        }}
+                    />
+                </button>
 
             </div>
             <p contentEditable={"true"} style={{
@@ -106,7 +127,9 @@ function UserPromptBlock(props){
                       width: "auto",
                       whiteSpace: "nowrap",
                       zIndex: "1"
-                  }} onKeyDown={(e) => {
+                  }}
+                    onClick={(e) => console.log("paragraph clicked")}
+                    onKeyDown={(e) => {
                       if (e.code === "Enter"){
                           e.preventDefault()
                           props.onSubmit()
@@ -124,8 +147,6 @@ function UserPromptBlock(props){
 function Block(props){
     let blocks;
     var swapButtonHidden = false
-    // TODO refactor this
-    var userPrompt = props.selectedTranscription
 
     if (props.transcr1 === props.transcr2){
         swapButtonHidden = true
@@ -166,10 +187,12 @@ function Block(props){
           <div style={{
               display: "flex",
               justifyContent: "center",
-              alignItems: "center"
+              alignItems: "center",
+              zIndex: 0
           }}>
               <UserPromptBlock onChange={props.onChange} userPromptRef={props.userPromptRef}
                 onSubmit={props.onSubmit} progress={props.progress} onPlay={props.onPlay}
+                               onPause={props.onPause} onRepeat={props.onRepeat} blockRepeated={props.blockRepeated}
               />
           </div>
 
@@ -208,7 +231,8 @@ class Annotate extends React.Component {
             kbSelected : props.blocks.map((x) => true),
             // We have to disconnect the user prompts from reacts rendering logic
             userEdited: props.blocks.map((x) => false),
-            blockProgresses: props.blocks.map((x) => 0)
+            blockProgresses: props.blocks.map((x) => 0),
+            blockRepeated: props.blocks.map((x) => false)
         }
         this.getSelectedTranscriptions = this.getSelectedTranscriptions.bind(this)
         this.handleChange = this.handleChange.bind(this)
@@ -240,6 +264,9 @@ class Annotate extends React.Component {
             this.userPromptRefs[i].current.innerHTML = this.state.selectedTranscriptions[i]
         })
         this.userPromptRefs[0].current.focus()
+        // document.addEventListener("click", (e) =>{
+        //     console.log("Got click event ", e)
+        // })
     }
     // Handles the change of event e at block index i
     handleChange(e, i){
@@ -262,17 +289,55 @@ class Annotate extends React.Component {
     // Called when a user presseses the play button on one of the UserPrompts
     // i is the position of the user prompt
     userPromptPlay(i){
-        console.log("Uuser on prompt play with i ", i)
+        // Play should override any results
+        this.setState({blockRepeated: this.state.blockRepeated.map((x) => false)})
+
         if (i === 0){
             this.rap.audioEl.current.currentTime = 0
         }
         else {
             this.rap.audioEl.current.currentTime = this.blockEndTimes[i-1]
         }
+        this.rap.audioEl.current.play()
     }
+
+    // Called when a user presseses the pause button on one of the UserPrompts
+    // i is the position of the user prompt
+    userPromptPause(i){
+        this.rap.audioEl.current.pause()
+    }
+    // Called when a user presseses the pause button on one of the UserPrompts
+    // i is the position of the user prompt
+    userPromptRepeat(i){
+        this.setState(prevState => {
+            var newBlockRepeated = prevState.blockRepeated.map((x)=> false)
+            // Only repeat the block clicked if it was not already repeated
+            // Otherwise it will be toggled
+            if (! prevState.blockRepeated[i]){
+                newBlockRepeated[i] = true
+            }
+            return {blockRepeated : newBlockRepeated}
+        })
+    }
+
     // Updates the progresses shown in user prompts whenever a listen event is emitted from the Audio player
     listenCallback(currTime){
         //console.log("This rap ", this.rap.audioEl.current.currentTime)
+        // TODO add repeat logic
+        // Index of the repeat block
+        var repeatBlockIdx = this.state.blockRepeated.indexOf(true)
+        // set audio players time to block start time if there is at least one repeated block
+        //  and the current time is past the blocks end time
+        if (repeatBlockIdx !== -1 && this.rap.audioEl.current.currentTime >  this.blockEndTimes[repeatBlockIdx] ){
+           if (repeatBlockIdx === 0){
+               this.rap.audioEl.current.currentTime = 0
+           }
+           else{
+               console.log("Setting audio player time to ", this.blockEndTimes[repeatBlockIdx-1])
+               this.rap.audioEl.current.currentTime = this.blockEndTimes[repeatBlockIdx-1]
+           }
+        }
+        // Update progress in react state
         this.setState(prevState => {
             var newBlockProgresses = this.props.blockEndTimes.map((e,i,a) =>{
                 if (currTime > e){
@@ -293,13 +358,13 @@ class Annotate extends React.Component {
                     }
                 }
             })
-            this.setState({blockProgresses : newBlockProgresses})
+            return {blockProgresses : newBlockProgresses}
         })
     }
     render(){
       return (<>
           <ReactAudioPlayer
-              src="https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav"
+              src="/file_7.wav"
               controls
               onListen={this.listenCallback}
               listenInterval={0.001}
@@ -343,7 +408,10 @@ class Annotate extends React.Component {
                                       }}
                                       userPromptRef={this.userPromptRefs[i]}
                                       progress={this.state.blockProgresses[i]}
-                                      onPlay={() => this.userPromptPlay(i) }
+                                      onPlay={() => this.userPromptPlay(i)}
+                                      onPause={() => this.userPromptPause(i)}
+                                      onRepeat={() => this.userPromptRepeat(i)}
+                                      blockRepeated={this.state.blockRepeated[i]}
                         />
                     })
                 }

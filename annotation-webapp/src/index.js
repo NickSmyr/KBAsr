@@ -20,25 +20,15 @@ ReactDOM.render(
   <React.StrictMode>
     <Annotate blocks={
             [
-                ["nya stället", "vi gör så rätt"],
-                ["mats", "mats"],
-                ["eller", "håller"],
-                ["ordning", "ordning"],
-                ["nya stället", "vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt"],
-                ["eller", "håller"],
-                ["ordning", "ordning"],
-                ["nya stället", "vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt"],
-                ["eller", "håller"],
-                ["ordning", "ordning"],
-                ["nya stället", "vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt"],
-                ["eller", "håller"],
-                ["ordning", "ordning"],
-                ["nya stället", "vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt vi gör så rätt"],
+                ["istället", "i stället"],
+                ["ska juridik och beteendevetenskap", "ska juridik och beteendevetenskap"],
+                ["ingår", "inga"],
+                ["i utbildningen på polishhögskolan", "i utbildningen på polishhögskolan"]
             ]
         }
               onSubmit={onSubmit}
               blockEndTimes={[
-                  1,2,3,4,5,6,7,8,9,10,11,12,13,14
+                  1.6,4.1,4.5,5.9
               ]}
     />
   </React.StrictMode>,
