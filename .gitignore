@@ -1,5 +1,6 @@
-.models
-*.pyc
+models
+data
 .idea
 .ipynb_checkpoints
-.pt
+__pycache__
+output
