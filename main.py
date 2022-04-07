@@ -130,7 +130,6 @@ def transcribe_directory_of_wav_files(dir, output_file, cuda=True, model_type=No
     directory = dir
     pipeline = None
 
-    # TODO sort output filename
     for file in tqdm(list(os.listdir(directory))):
         filename = file
         if filename.endswith(".wav"):

@@ -322,8 +322,6 @@ class Annotate extends React.Component {
 
     // Updates the progresses shown in user prompts whenever a listen event is emitted from the Audio player
     listenCallback(currTime){
-        //console.log("This rap ", this.rap.audioEl.current.currentTime)
-        // TODO add repeat logic
         // Index of the repeat block
         var repeatBlockIdx = this.state.blockRepeated.indexOf(true)
         // set audio players time to block start time if there is at least one repeated block

@@ -39,7 +39,7 @@ import cv2
 input_root = './data/dummywavs/' # location of wav input files
 data_root = './output/breath/' # location to save wav and textgrid
 output_root = './output/breath/'  # location of other outputs from the process
-trained_model = './vadpipeline/models/modelMix4.h5' # pretrained model for breath identification
+trained_model = './breath_detection/models/modelMix4.h5' # pretrained model for breath identification
 # settings
 
 print("Found wav files ", os.listdir(input_root))

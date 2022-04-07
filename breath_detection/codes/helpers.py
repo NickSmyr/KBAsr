@@ -30,6 +30,7 @@ def load_wav(fn, sr=None, normalize=True):
     if fn == '': # ignore empty filenames
         print('filename missing')
         return None
+    # Use soundfile or another library here
     fs, audio = wavfile.read(fn)
     audio = audio.astype(np.float32)
     duration = np.shape(audio)[0]

@@ -26,7 +26,6 @@ def blocks(s1 :str, s2 : str) -> Tuple[List[Tuple[str,str]],List[int]]:
     # If the block list does not start with 0 idxs on both, then there is an
     # unmatched block at the start
 
-    # TODO maybe refactor
     # If the final block does not cover the sentence add the initial unmatched block
     if blocks_list[0].a != 0 or blocks_list[0].b != 0:
         start_idx_a = 0
