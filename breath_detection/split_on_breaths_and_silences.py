@@ -89,7 +89,6 @@ def split_on_breaths_and_silences(input_file_name, output_directory, breath_dete
     # Will throw an exception if not close relevant issue (https://github.com/tensorflow/agents/issues/400)
     pool.close()
     x_complete = np.asarray(colspecs).astype(np.float32)
-    print(np.shape(x_complete))
 
     # save the zcr-coloured melspectrograms
     if not os.path.exists(join(output_root, 'zcrgrams/', output_prefix)):
@@ -109,7 +108,6 @@ def split_on_breaths_and_silences(input_file_name, output_directory, breath_dete
     # prepare the coloured spectrograms to take them through the model
     files = list(list_filenames(join(output_root, 'zcrgrams/', output_prefix), ['.png']))
     files.sort()
-    print('number of files:', len(files))
 
     im = cv2.imread(files[0])
     # x_complete is recreated from the saved spectrograms (saving and loading it
@@ -123,25 +121,21 @@ def split_on_breaths_and_silences(input_file_name, output_directory, breath_dete
 
     # take the spectogram apart into slices to be fed to the model
     img_cols2 = img_cols // timesteps
-    print('frames per model input slice:', img_cols2)
 
     x2_pred = np.empty((np.shape(x_complete)[0], timesteps, np.shape(x_complete)[1], img_cols2, np.shape(x_complete)[3]))
 
     for j in range(0, np.shape(x_complete)[0]):
         for k in range(0, timesteps):
             x2_pred[j, k, :, :, :] = x_complete[j, :, k * img_cols2:(k + 1) * img_cols2, :]
-    print('model input shape:', np.shape(x2_pred))
 
     # make predictions
     model = keras.models.load_model(trained_model, compile=False)
     out_pred = model.predict(x2_pred, batch_size=1)
-    print('prediction shape', np.shape(out_pred))
 
     # merge prediction into one time series
     flat_pred = np.empty((np.shape(out_pred)[0] * np.shape(out_pred)[1], np.shape(out_pred)[2]))
     for j in range(0, np.shape(out_pred)[0]):
         flat_pred[j * timesteps:(j + 1) * timesteps, :] = out_pred[j, :, :]
-    print('flattened prediction shape:', np.shape(flat_pred))
 
     # clean up and save results
     if not os.path.exists(join(output_root , 'predictions/')):
@@ -268,8 +262,6 @@ def split_on_breaths_and_silences(input_file_name, output_directory, breath_dete
                                  np.zeros(int(trail * sr))))
         wavname[i] = (str(join(output_root, output_prefix , 'wav' , output_prefix + '_' + '{:04d}'))
                       .format(i + output_start) + '.wav')
-        print("Found wavname ", wavname[i])
-        print("Create wav ", create_wav)
         # TODO what are these create wavs
         # wavfile.write(wavname[i], sr, wwrite)
         if create_wav:
