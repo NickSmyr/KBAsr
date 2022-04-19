@@ -14,7 +14,7 @@ import numpy as np
               help="The output directory for files")
 @click.option('--numsamples', type=click.INT , required=True,
               help="The number of samples (length of array)")
-def generate(samplerate, filename, numsamples):
+def generate_bogus_wav_file(samplerate, filename, numsamples):
     """
     Generate random noise wav file with the given parameters
     """

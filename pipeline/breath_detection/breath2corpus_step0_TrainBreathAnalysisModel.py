@@ -10,14 +10,10 @@ set of recordings.
 @author: szekely
 """
 
-
-import numpy as np
-
 from multiprocessing import Pool
 from PIL import Image
 import random
 
-import os
 import codes
 from codes.helpers import *
 #from utils.list_filenames import *

@@ -2,9 +2,9 @@ import os
 from functools import reduce
 
 from google_kb_z_speaker.main import fix_lines
-from loadfile import get_fname_lines, transcriptions
-from phonemes import get_swedish_phonemes
-from preprocess import preprocess_text
+from utils.loadfile import get_fname_lines, transcriptions
+from utils.phonemes import get_swedish_phonemes
+from utils.preprocess import preprocess_text
 
 
 def singular_phonemes(txt : str):

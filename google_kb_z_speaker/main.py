@@ -1,15 +1,6 @@
 from difflib import SequenceMatcher
-from functools import reduce
 
-import Levenshtein
-from jiwer import wer
-
-from evaluate import error_idxs
-from loadfile import extract_file_idxs_from_lines, get_fname_lines, transcriptions
-import matplotlib.pyplot as plt
-
-from phonemes import get_swedish_phonemes, init_phonemizer
-from preprocess import preprocess_text, w2id, encode_txt, remove_punct
+from utils.loadfile import extract_file_idxs_from_lines
 
 
 def fix_lines(model2speaker_lines):

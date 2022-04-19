@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from phonemes import get_swedish_phonemes, init_phonemizer, unravel_phonemes, phonemizer_wrapper, read_phoneme_dict
+from utils.phonemes import get_swedish_phonemes, init_phonemizer, unravel_phonemes, phonemizer_wrapper, read_phoneme_dict
 
 
 class TestPhonemes(unittest.TestCase):
@@ -16,8 +16,8 @@ class TestPhonemes(unittest.TestCase):
             "27"
         ]
         self.STRESS_MARKS = ["\'", "\"", "`"]
-        self.PHONEME_DICT = read_phoneme_dict("../models/stress_lex_mtm.txt")
-        self.PHONEMIZER = init_phonemizer("cpu", "../models/deep-phonemizer-se.pt")
+        self.PHONEME_DICT = read_phoneme_dict("models/stress_lex_mtm.txt")
+        self.PHONEMIZER = init_phonemizer("cpu", "models/deep-phonemizer-se.pt")
 
         # Assert there exist OOV words and stress marks
         oov_exist = False

@@ -1,19 +1,12 @@
 import re
-from functools import reduce
-import Levenshtein
 import librosa
-import matplotlib.pyplot as plt
 import torch
 import torchaudio
 
-from jiwer import wer
 from tqdm.auto import tqdm
 import os
 
 from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
-
-from loadfile import sequence_of_transcriptions, transcriptions, get_fname_lines, extract_file_idxs_from_lines
-from preprocess import preprocess_text, w2id, encode_txt, remove_punct
 
 import soundfile as sf
 

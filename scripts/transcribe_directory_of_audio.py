@@ -1,6 +1,6 @@
 import sys
 
-from main import transcribe_directory_of_wav_files
+from utils.main import transcribe_directory_of_wav_files
 
 try:
     path = sys.argv[1]

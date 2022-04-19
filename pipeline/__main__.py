@@ -10,11 +10,17 @@ from praatio import tgio
 from pydub import AudioSegment
 import shutil
 # Disable TF logging for now TODO
+from pipeline.speaker_diarization.separate_speakers import create_speaker_files_from_audio_path_old
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-from breath_detection.split_on_breaths_and_silences import split_on_breaths_and_silences
+from pipeline.breath_detection.split_on_breaths_and_silences import split_on_breaths_and_silences
 BREATH_DETECTION_MODEL_PATH = "./breath_detection/models/modelMix4.h5"
 
-@click.command()
+@click.group()
+def main():
+    pass
+
+@main.command()
 @click.option('--input-wav', type=click.Path(exists=True), required=True,
               help="The filename to split on breaths and silences")
 @click.option('--output-dir', required=True,
@@ -34,6 +40,9 @@ def split(input_wav, output_dir):
 
     Examples:\n
         python -m pipeline --input-wav mywavfile --output-dir mydir
+
+    Some files may end up wrongly containing breaths or silences since this algorithm
+    is based on a statistical model
     """
     split_output_dir = join(output_dir, "tmp")
     try:
@@ -53,7 +62,19 @@ def split(input_wav, output_dir):
     shutil.rmtree(split_output_dir)
 
 
+@main.command()
+@click.option('--input-wav', type=click.Path(exists=True), required=True,
+              help="The filename to split on breaths and silences")
+@click.option('--output-dir', required=True,
+              help="The output directory for files")
+def diarize(input_wav, output_dir):
+    """
+    Split an audio file containing two speakers into two separate audio files for each speaker.
+    """
+    create_speaker_files_from_audio_path_old(input_wav)
+
+
 
 
 if __name__ == '__main__':
-    split()
+    main()

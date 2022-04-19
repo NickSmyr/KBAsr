@@ -4,14 +4,13 @@ from statistics import mean
 from typing import Dict, List, Union, Tuple
 
 from jiwer import wer
-from tqdm.auto import tqdm
 
-from evaluate import error_idxs
+from utils.evaluate import error_idxs
 from google_kb_z_speaker.main import get_lcs_str, filter_bunches_only_on_agreement, filter_bunches, agreement_stats, \
     bunch_agrees
 from google_kb_z_speaker.preprocessing import get_swedish_phonemes_z, singular_phonemes_preprocess
-from phonemes import init_phonemizer
-from seqmatch import blocks
+from utils.phonemes import init_phonemizer
+from utils.seqmatch import blocks
 
 import numpy as np
 

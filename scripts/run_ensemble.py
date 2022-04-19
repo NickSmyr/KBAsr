@@ -1,6 +1,6 @@
 import pickle
 
-from experiment_helpers import grid, experiment_repeats
+from utils.experiment_helpers import grid, experiment_repeats
 from google_kb_z_speaker.experiments import ensemble
 from google_kb_z_speaker.preprocessing import get_bunches
 import numpy as np

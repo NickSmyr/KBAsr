@@ -1,6 +1,6 @@
 import unittest
 
-from seqmatch import blocks
+from utils.seqmatch import blocks
 
 
 class TestBlocks(unittest.TestCase):

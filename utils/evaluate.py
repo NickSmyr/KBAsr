@@ -1,6 +1,6 @@
 import Levenshtein
 
-from preprocess import w2id, encode_txt
+from utils.preprocess import w2id, encode_txt
 
 
 def error_idxs(correct: str, target : str):

@@ -10,11 +10,6 @@ interpreter: std spyder
 # 
 import os
 import numpy as np
-from matplotlib import pyplot as plt
-from skimage.measure import block_reduce
-from scipy import signal
-from scipy import io
-from scipy.io import wavfile
 import soundfile as sf
 
 from praatio import tgio
@@ -38,7 +33,7 @@ def load_wav(fn, sr=None, normalize=True):
         print('sample has no length')
         return None
     if sr != fs and sr != None:
-        audio = librosa.resample(audio, fs, sr)
+        audio = librosa.resample(audio, orig_sr=fs, target_sr=sr)
         fs = sr
     max_val = np.abs(audio).max()
     if max_val == 0: # ignore completely silent sounds
@@ -55,7 +50,8 @@ def create_melspec(wav_in, sr=None, n_fft = 960, hop_length=120, n_mels=128):
         sr = min(48000, len(wav_in) // 2)
         n_fft = sr // 50
         hop_length = sr // 400
-    S = librosa.feature.melspectrogram(wav_in, power=1, sr=sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels)
+    S = librosa.feature.melspectrogram(y=wav_in, power=1, sr=sr, n_fft=n_fft,
+                                       hop_length=hop_length, n_mels=n_mels)
     #log_S = librosa.amplitude_to_db(S, ref=np.max)
     log_S = librosa.amplitude_to_db(S, ref=np.max)
     melspecs = np.asarray(log_S).astype(np.float32)
