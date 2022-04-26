@@ -1,0 +1,4 @@
+[flake8]
+ignore = D203
+exclude =.git,__pycache__,pipeline/breath_detection,annotation-webapp,data,models,venv,output
+max-complexity = 10

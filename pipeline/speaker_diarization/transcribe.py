@@ -1,21 +1,20 @@
-from lib2to3.pytree import convert
-from xdrlib import ConversionError
 import torchaudio
 import torch
-from itertools import groupby
 from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
-from transformers import HubertForSequenceClassification, Wav2Vec2FeatureExtractor
-from transformers import pipeline
+from transformers import (
+    HubertForSequenceClassification,
+    Wav2Vec2FeatureExtractor,
+)
 import librosa
 
 from speechbrain.pretrained import EncoderClassifier
-from typing import Any
 import soundfile as sf
 import os
 import numpy as np
 
 
 # from language_files import get_model
+
 
 class ConversionError(Exception):
     pass
@@ -52,7 +51,7 @@ language_dict = {
     "Kinyarwanda": "lucio/wav2vec2-large-xlsr-kinyarwanda",
     "Lithuanian": "DeividasM/wav2vec2-large-xlsr-53-lithuanian",
     "Hungarian": "jonatasgrosman/wav2vec2-large-xlsr-53-hungarian",
-    "Finnish": "aapot/wav2vec2-large-xlsr-53-finnish"
+    "Finnish": "aapot/wav2vec2-large-xlsr-53-finnish",
 }
 
 
@@ -60,8 +59,10 @@ language_dict = {
 # chech language
 # enable batch mode
 def extract_speaker_embedding(audio_path):
-    classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb",
-                                                savedir="pretrained_models/spkrec-xvect-voxceleb")
+    classifier = EncoderClassifier.from_hparams(
+        source="speechbrain/spkrec-xvect-voxceleb",
+        savedir="pretrained_models/spkrec-xvect-voxceleb",
+    )
     signal, fs = torchaudio.load(audio_path)
     embeddings = classifier.encode_batch(signal)
     # print(embeddings)
@@ -76,39 +77,49 @@ def change_sample_rate(audio_path, new_sample_rate=16000):
 
 
 def classify_emotion(audio_path):
-    model = HubertForSequenceClassification.from_pretrained("superb/hubert-large-superb-er")
-    feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained("superb/hubert-large-superb-er")
+    model = HubertForSequenceClassification.from_pretrained(
+        "superb/hubert-large-superb-er"
+    )
+    feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
+        "superb/hubert-large-superb-er"
+    )
     speech, _ = librosa.load(audio_path, sr=16000, mono=True)
 
-    inputs = feature_extractor(speech, sampling_rate=16000, padding=True, return_tensors="pt")
+    inputs = feature_extractor(
+        speech, sampling_rate=16000, padding=True, return_tensors="pt"
+    )
 
     logits = model(**inputs).logits
     predicted_ids = torch.argmax(logits, dim=-1)
     labels = [model.config.id2label[_id] for _id in predicted_ids.tolist()]
     # print(labels)
-    return (labels)
+    return labels
 
 
 def classify_language(audio_path):
-    classifier = EncoderClassifier.from_hparams(source="speechbrain/lang-id-commonlanguage_ecapa",
-                                                savedir="pretrained_models/lang-id-commonlanguage_ecapa")
+    classifier = EncoderClassifier.from_hparams(
+        source="speechbrain/lang-id-commonlanguage_ecapa",
+        savedir="pretrained_models/lang-id-commonlanguage_ecapa",
+    )
     out_prob, score, index, text_lab = classifier.classify_file(audio_path)
-    return (text_lab[0])
+    return text_lab[0]
 
 
 def convert_to_wav(audio_path):
     path = audio_path.split("/")
     filename = path[-1].split(".")[0]
     audio, sr = librosa.load(audio_path)
-    wav_path = f'{filename}.wav'
-    sf.write(wav_path, audio, sr, subtype='PCM_24')
+    wav_path = f"{filename}.wav"
+    sf.write(wav_path, audio, sr, subtype="PCM_24")
     return wav_path
 
 
-def get_speech_rate_time_stamps(time_stamps, downsample=320, sample_rate=16000):
+def get_speech_rate_time_stamps(
+    time_stamps, downsample=320, sample_rate=16000
+):
     utterances = len(time_stamps[0])
-    start_time = time_stamps[0][0]['start_offset']
-    end_time = time_stamps[0][utterances - 1]['end_offset']
+    start_time = time_stamps[0][0]["start_offset"]
+    end_time = time_stamps[0][utterances - 1]["end_offset"]
     duration = end_time - start_time
 
     speech_rate = ((duration / utterances) * downsample) / sample_rate
@@ -126,14 +137,16 @@ def calculate_variance(data):
     return variance
 
 
-def get_speech_rate_variability(time_stamps, type='char', downsample=320, sample_rate=16000):
+def get_speech_rate_variability(
+    time_stamps, type="char", downsample=320, sample_rate=16000
+):
     base = downsample / sample_rate
     token_durations = {}
 
     for time_stamp in time_stamps[0]:
 
-        start_time = round(time_stamp['start_offset'] * base, 2)
-        end_time = round(time_stamp['end_offset'] * base, 2)
+        start_time = round(time_stamp["start_offset"] * base, 2)
+        end_time = round(time_stamp["end_offset"] * base, 2)
         char = time_stamp[type]
         duration = end_time - start_time
 
@@ -160,14 +173,20 @@ def get_speech_rate_variability(time_stamps, type='char', downsample=320, sample
     return averages, stds, variances
 
 
-def transcribe_from_audio_path(audio_path, language='Swedish', check_language=False,
-                               classify_emotion=False, model="", output_word_offsets=False):
+def transcribe_from_audio_path(
+    audio_path,
+    language="Swedish",
+    check_language=False,
+    classify_emotion=False,
+    model="",
+    output_word_offsets=False,
+):
     converted = False
     if audio_path[-4:] != ".wav":
         try:
             audio_path = convert_to_wav(audio_path)
             converted = True
-        except:
+        except Exception:
             raise ConversionError(f"Could not convert {audio_path} to wav")
 
     waveform, sample_rate = torchaudio.load(audio_path)
@@ -186,14 +205,20 @@ def transcribe_from_audio_path(audio_path, language='Swedish', check_language=Fa
             model_id = language_dict[language]
         except KeyError:
             print(
-                "No language model found for %s. Defaulting to KBLab/wav2vec2-large-voxrex-swedish unless another model was specified." % language)
+                "No language model found for %s. "
+                "Defaulting to KBLab/wav2vec2-large-voxrex-swedish unless"
+                " another model was specified." % language
+            )
             model_id = "KBLab/wav2vec2-large-voxrex-swedish"
     else:
         try:
             model_id = language_dict[language]
         except KeyError:
             print(
-                "No language model found for %s. Defaulting to KBLab/wav2vec2-large-voxrex-swedish unless another model was specified." % language)
+                "No language model found for %s. Defaulting to "
+                "KBLab/wav2vec2-large-voxrex-swedish unless another model "
+                "was specified." % language
+            )
             model_id = "KBLab/wav2vec2-large-voxrex-swedish"
 
     if model:
@@ -206,18 +231,21 @@ def transcribe_from_audio_path(audio_path, language='Swedish', check_language=Fa
     pred_ids = torch.argmax(logits, dim=-1)
 
     if output_word_offsets:
-        outputs = processor.batch_decode(pred_ids, output_word_offsets=output_word_offsets)
+        outputs = processor.batch_decode(
+            pred_ids, output_word_offsets=output_word_offsets
+        )
         transcription = outputs["text"][0]
         token_time_stamps = outputs[1]
         speech_rate = get_speech_rate_time_stamps(token_time_stamps)
-        averages, stds, variances = get_speech_rate_variability(token_time_stamps, type="char")
-        word_time_stamps = outputs[2]
+        averages, stds, variances = get_speech_rate_variability(
+            token_time_stamps, type="char"
+        )
         return {
             "transcription": transcription,
             "speech_rate": speech_rate,
             "averages": averages,
             "standard_deviations": stds,
-            "variances": variances
+            "variances": variances,
         }
     else:
         transcription = processor.batch_decode(pred_ids)

@@ -10,7 +10,7 @@ import re
 
 def extract_file_idxs_from_lines(lines):
     pat = re.compile("file_(\d+)\.wav")
-    return [ int(pat.search(x).groups()[0]) for x in lines]
+    return [int(pat.search(x).groups()[0]) for x in lines]
 
 
 def sequence_of_transcriptions(lines):
@@ -38,6 +38,6 @@ def transcriptions(lines):
 
 
 def get_fname_lines(fname):
-    with open(fname, 'r', encoding="UTF-8") as f:
+    with open(fname, "r", encoding="UTF-8") as f:
         lines = f.readlines()
     return lines

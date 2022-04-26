@@ -41,16 +41,19 @@ language_dict = {
     "Kinyarwanda": "lucio/wav2vec2-large-xlsr-kinyarwanda",
     "Lithuanian": "DeividasM/wav2vec2-large-xlsr-53-lithuanian",
     "Hungarian": "jonatasgrosman/wav2vec2-large-xlsr-53-hungarian",
-    "Finnish": "aapot/wav2vec2-large-xlsr-53-finnish"
-    }
+    "Finnish": "aapot/wav2vec2-large-xlsr-53-finnish",
+}
+
 
 class Pipeline:
     def __init__(self, processor, model):
         self.processor = processor
         self.model = model
 
+
 class ConversionError(Exception):
     pass
+
 
 def change_sample_rate(audio_path, new_sample_rate=16000):
     audio_to_resample, sr = librosa.load(audio_path)
@@ -58,20 +61,27 @@ def change_sample_rate(audio_path, new_sample_rate=16000):
     resampled_tensor = torch.tensor([resampled_audio])
     return resampled_tensor
 
+
 def convert_to_wav(audio_path):
     path = audio_path.split("/")
     filename = path[-1].split(".")[0]
     audio, sr = librosa.load(audio_path)
-    wav_path = f'{filename}.wav'
-    sf.write(wav_path, audio, sr, subtype='PCM_24')
+    wav_path = f"{filename}.wav"
+    sf.write(wav_path, audio, sr, subtype="PCM_24")
     return wav_path
 
 
-def transcribe_from_audio_path(audio_path, check_language=False, classify_emotion=False, model="",
-                               pipeline=None, cuda=True):
+def transcribe_from_audio_path(
+    audio_path,
+    check_language=False,
+    classify_emotion=False,
+    model="",
+    pipeline=None,
+    cuda=True,
+):
     converted = False
 
-    device = 'cpu'
+    device = "cpu"
     if torch.cuda.is_available() and cuda:
         device = "cuda"
 
@@ -111,7 +121,10 @@ def transcribe_from_audio_path(audio_path, check_language=False, classify_emotio
     # print(transcription)
     return transcription[0], processor, model
 
-def transcribe_directory_of_wav_files(dir, output_file, cuda=True, model_type=None):
+
+def transcribe_directory_of_wav_files(
+    dir, output_file, cuda=True, model_type=None
+):
     """
     Output a file with first column being the filename and second
     column the transcription from TMH
@@ -128,24 +141,30 @@ def transcribe_directory_of_wav_files(dir, output_file, cuda=True, model_type=No
         if filename.endswith(".wav"):
             complete_filename = os.path.join(directory, filename)
             print("Transcribing file ", complete_filename)
-            transcription, processor, model = transcribe_from_audio_path(complete_filename,
-                                                                         pipeline=pipeline, cuda=cuda,
-                                                                         model=model_type)
+            transcription, processor, model = transcribe_from_audio_path(
+                complete_filename,
+                pipeline=pipeline,
+                cuda=cuda,
+                model=model_type,
+            )
             if processor != None:
                 pipeline = Pipeline(processor, model)
             filenames2transcriptions[filename] = transcription
 
     ret_lines = []
-    for k,v in filenames2transcriptions.items():
-        ret_lines.append(k + '\t' + v + "\n")
+    for k, v in filenames2transcriptions.items():
+        ret_lines.append(k + "\t" + v + "\n")
 
     pat = re.compile("file_(\d+)\.wav")
     lines = sorted(ret_lines, key=lambda x: int(pat.search(x).groups()[0]))
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         f.writelines(lines)
 
-def transcribe_directory_of_wav_files_return_file_lines(dir, cuda : bool, model_type):
+
+def transcribe_directory_of_wav_files_return_file_lines(
+    dir, cuda: bool, model_type
+):
     """
     Output a file with first column being the filename and second
     column the transcription from TMH
@@ -164,25 +183,32 @@ def transcribe_directory_of_wav_files_return_file_lines(dir, cuda : bool, model_
         if filename.endswith(".wav"):
             complete_filename = os.path.join(directory, filename)
             pbar.set_postfix_str(filename)
-            transcription, processor, model = transcribe_from_audio_path(complete_filename, model=model_type,
-                                                                         pipeline=pipeline, cuda=cuda)
+            transcription, processor, model = transcribe_from_audio_path(
+                complete_filename,
+                model=model_type,
+                pipeline=pipeline,
+                cuda=cuda,
+            )
             if processor != None:
                 pipeline = Pipeline(processor, model)
             filenames2transcriptions[filename] = transcription
 
-
-    for k,v in filenames2transcriptions.items():
-        ret_lines.append(k + '\t' + v + "\n")
+    for k, v in filenames2transcriptions.items():
+        ret_lines.append(k + "\t" + v + "\n")
 
     pat = re.compile("file_(\d+)\.wav")
     lines = sorted(ret_lines, key=lambda x: int(pat.search(x).groups()[0]))
     return lines
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     model_types = [
         "KBLab/wav2vec2-large-voxrex-swedish",
-        "birgermoell/lm-swedish"
+        "birgermoell/lm-swedish",
     ]
-    res = transcribe_directory_of_wav_files_return_file_lines("/data/sisters/maggan_dialogue/z29", True,
-                                                              model_type="birgermoell/lm-swedish")
+    res = transcribe_directory_of_wav_files_return_file_lines(
+        "/data/sisters/maggan_dialogue/z29",
+        True,
+        model_type="birgermoell/lm-swedish",
+    )
     print(res)

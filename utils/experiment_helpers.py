@@ -43,11 +43,12 @@ def experiment_repeats(experiment, count: int, *args, **kwargs):
     for _ in tqdm(range(count)):
         res.append(experiment(*args, **kwargs))
     means = {k: mean([dict[k] for dict in res]) for k in res[0]}
-    if count == 1:      
+    if count == 1:
         stds = {k: 0 for k in res[0]}
     else:
         stds = {k: stdev([dict[k] for dict in res]) for k in res[0]}
     return {k: ExperimentResult(means[k], stds[k]) for k in res[0]}
+
 
 def grid(experiment, args, kwargs, stub=False):
     """
@@ -64,13 +65,12 @@ def grid(experiment, args, kwargs, stub=False):
     res = []
     for x in tqdm(list(product(*args))):
         if stub:
-            res.append((x, {"dummy" : 0}))
+            res.append((x, {"dummy": 0}))
         else:
-            res.append((x,experiment(*x, **kwargs)))
+            res.append((x, experiment(*x, **kwargs)))
     return res
 
 
-
 def print_experiment_report(experiment_output):
-    for k,v in experiment_output.items():
+    for k, v in experiment_output.items():
         print(k + ": " + str(v))

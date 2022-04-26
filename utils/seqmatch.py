@@ -2,7 +2,7 @@ from difflib import SequenceMatcher
 from typing import List, Tuple
 
 
-def blocks(s1 :str, s2 : str) -> Tuple[List[Tuple[str,str]],List[int]]:
+def blocks(s1: str, s2: str) -> Tuple[List[Tuple[str, str]], List[int]]:
     """
     Given two strings (containing words) it splits both strings into the same number of blocks,
     some block indexes will be matched meaning that if at index 2 s2 has block b2 and block b1
@@ -21,7 +21,7 @@ def blocks(s1 :str, s2 : str) -> Tuple[List[Tuple[str,str]],List[int]]:
     block_pairs = []
     # If blocks_list is empty then there are no matching blocks
     if len(blocks_list) == 0:
-        return [(" ".join(s1), " ".join(s2))] , [0]
+        return [(" ".join(s1), " ".join(s2))], [0]
 
     # If the block list does not start with 0 idxs on both, then there is an
     # unmatched block at the start
@@ -32,10 +32,9 @@ def blocks(s1 :str, s2 : str) -> Tuple[List[Tuple[str,str]],List[int]]:
         end_idx_a = blocks_list[0].a
         start_idx_b = 0
         end_idx_b = blocks_list[0].b
-        block_pairs.append([
-            s1[start_idx_a: end_idx_a],
-            s2[start_idx_b: end_idx_b]
-        ])
+        block_pairs.append(
+            [s1[start_idx_a:end_idx_a], s2[start_idx_b:end_idx_b]]
+        )
         unmatched_block_idxs.append(len(block_pairs) - 1)
 
     for i in range(len(blocks_list) - 1):
@@ -44,19 +43,17 @@ def blocks(s1 :str, s2 : str) -> Tuple[List[Tuple[str,str]],List[int]]:
         end_idx_a = blocks_list[i].a + blocks_list[i].size
         start_idx_b = blocks_list[i].b
         end_idx_b = blocks_list[i].b + blocks_list[i].size
-        block_pairs.append([
-            s1[start_idx_a: end_idx_a],
-            s2[start_idx_b: end_idx_b]
-        ])
+        block_pairs.append(
+            [s1[start_idx_a:end_idx_a], s2[start_idx_b:end_idx_b]]
+        )
         # Unmatched blocks
         start_idx_a = blocks_list[i].a + blocks_list[i].size
         end_idx_a = blocks_list[i + 1].a
         start_idx_b = blocks_list[i].b + blocks_list[i].size
         end_idx_b = blocks_list[i + 1].b
-        block_pairs.append([
-            s1[start_idx_a: end_idx_a],
-            s2[start_idx_b: end_idx_b]
-        ])
+        block_pairs.append(
+            [s1[start_idx_a:end_idx_a], s2[start_idx_b:end_idx_b]]
+        )
         unmatched_block_idxs.append(len(block_pairs) - 1)
 
     # Add final block
@@ -64,10 +61,7 @@ def blocks(s1 :str, s2 : str) -> Tuple[List[Tuple[str,str]],List[int]]:
     end_idx_a = blocks_list[-1].a + blocks_list[-1].size
     start_idx_b = blocks_list[-1].b
     end_idx_b = blocks_list[-1].b + blocks_list[-1].size
-    block_pairs.append([
-        s1[start_idx_a: end_idx_a],
-        s2[start_idx_b: end_idx_b]
-    ])
+    block_pairs.append([s1[start_idx_a:end_idx_a], s2[start_idx_b:end_idx_b]])
 
     # If the final block does not cover the sentence add the trailing unmatched block
     if end_idx_a != len(s1) or end_idx_b != len(s2):
@@ -75,10 +69,9 @@ def blocks(s1 :str, s2 : str) -> Tuple[List[Tuple[str,str]],List[int]]:
         end_idx_a = len(s1)
         start_idx_b = blocks_list[-1].b + blocks_list[-1].size
         end_idx_b = len(s2)
-        block_pairs.append([
-            s1[start_idx_a: end_idx_a],
-            s2[start_idx_b: end_idx_b]
-        ])
+        block_pairs.append(
+            [s1[start_idx_a:end_idx_a], s2[start_idx_b:end_idx_b]]
+        )
         unmatched_block_idxs.append(len(block_pairs) - 1)
 
     # Concatenate words within blocks

@@ -5,22 +5,30 @@ from utils.loadfile import extract_file_idxs_from_lines
 
 def fix_lines(model2speaker_lines):
     """
-        MUTABLE operation Remove nonexisting in correct filenames in kb
-        :return: the corrected lines
+    MUTABLE operation Remove nonexisting in correct filenames in kb
+    :return: the corrected lines
     """
     # Test which numbers are missing from the correct
-    nums = {k : extract_file_idxs_from_lines(v) for k,v in model2speaker_lines.items()}
+    nums = {
+        k: extract_file_idxs_from_lines(v)
+        for k, v in model2speaker_lines.items()
+    }
 
     # Create mappings from  file idxs to list idxs
-    model2fi2li = {k : {fi: li for li, fi in enumerate(v)} for k, v in nums.items()}
+    model2fi2li = {
+        k: {fi: li for li, fi in enumerate(v)} for k, v in nums.items()
+    }
     # Correct lines are subsets of the transcribed lines
-    nums = {k: set(v) for k,v in nums.items()}
+    nums = {k: set(v) for k, v in nums.items()}
     assert nums["correct"] == nums["google"]
     assert len(nums["correct"] - nums["kb"]) == 0
     extra_idxs = nums["kb"] - nums["correct"]
 
     # Filter extra google,kb lines
-    print("Found extra lines in kb model outputs which are going to be deleted", sorted(list(extra_idxs)))
+    print(
+        "Found extra lines in kb model outputs which are going to be deleted",
+        sorted(list(extra_idxs)),
+    )
     for fi in sorted(list(extra_idxs), reverse=True):
         # if idx < len(google_lines):
         #    del google_lines[idx]
@@ -31,10 +39,13 @@ def fix_lines(model2speaker_lines):
 
 def file_lines_are_correct(model2speaker_lines):
 
-    nums = {k : extract_file_idxs_from_lines(v) for k,v in model2speaker_lines.items()}
+    nums = {
+        k: extract_file_idxs_from_lines(v)
+        for k, v in model2speaker_lines.items()
+    }
 
     # Correct lines are subsets of the transcribed lines
-    nums = {k: set(v) for k,v in nums.items()}
+    nums = {k: set(v) for k, v in nums.items()}
     return nums["correct"] == nums["google"] and nums["correct"] == nums["kb"]
 
 
@@ -59,7 +70,10 @@ def agreement_stats(bunches):
     agreement_correct = 0
     both_incorrect_disagreement = 0
 
-    bunch_list = [{k: bunches[k][i] for k in bunches} for i in range(len([x for x in bunches.values()][0]))]
+    bunch_list = [
+        {k: bunches[k][i] for k in bunches}
+        for i in range(len([x for x in bunches.values()][0]))
+    ]
     for bunch in bunch_list:
         t_c = bunch["correct"]
         t_g = bunch["google"]
@@ -67,15 +81,15 @@ def agreement_stats(bunches):
         total += 1
         if t_g == t_kb:
             count_agreement += 1
-            if (t_g == t_c):
+            if t_g == t_c:
                 agreement_correct += 1
             else:
-                agreement_not_correct+=1
+                agreement_not_correct += 1
         else:
             count_disagreement += 1
-            if (t_g == t_c):
+            if t_g == t_c:
                 g_correct_kb_not += 1
-            elif (t_kb == t_c):
+            elif t_kb == t_c:
                 kb_correct_g_not += 1
             else:
                 both_incorrect_disagreement += 1
@@ -83,26 +97,39 @@ def agreement_stats(bunches):
     agreement_not_correct /= count_agreement
     agreement_correct /= count_agreement
 
-
     g_correct_kb_not /= count_disagreement
     kb_correct_g_not /= count_disagreement
     both_incorrect_disagreement /= count_disagreement
 
     count_agreement /= total
-    return  count_agreement, g_correct_kb_not, kb_correct_g_not, agreement_not_correct, agreement_correct,\
-            both_incorrect_disagreement
+    return (
+        count_agreement,
+        g_correct_kb_not,
+        kb_correct_g_not,
+        agreement_not_correct,
+        agreement_correct,
+        both_incorrect_disagreement,
+    )
+
 
 def get_lcs_str(bunch):
     splitted = {k: v.split(" ") for k, v in bunch.items()}
     s = SequenceMatcher(None, splitted["google"], splitted["kb"])
-    lcs = " ".join([" ".join(splitted["google"][block.a:(block.a + block.size)]) for block in s.get_matching_blocks()
-                    if block.size > 0])
+    lcs = " ".join(
+        [
+            " ".join(splitted["google"][block.a : (block.a + block.size)])
+            for block in s.get_matching_blocks()
+            if block.size > 0
+        ]
+    )
     return lcs
+
 
 def agreement_percentage(bunch):
     splitted = {k: v.split(" ") for k, v in bunch.items()}
     lcs = get_lcs_str(bunch)
     return len(lcs.split()) / max(len(splitted["google"]), len(splitted["kb"]))
+
 
 def bunch_agrees(bunch, threshold):
     """
@@ -117,18 +144,21 @@ def bunch_agrees(bunch, threshold):
     :return: bool
     """
     perc_agr = agreement_percentage(bunch)
-    return True if  perc_agr >= threshold else False
+    return True if perc_agr >= threshold else False
 
-def filter_bunches(bunches,
-                 agreement, kb_correct, g_correct):
-    c,g,kb = [],[],[]
-    bunch_list = [ {k : bunches[k][i] for k in bunches} for i in range(len([x for x in bunches.values()][0]))]
+
+def filter_bunches(bunches, agreement, kb_correct, g_correct):
+    c, g, kb = [], [], []
+    bunch_list = [
+        {k: bunches[k][i] for k in bunches}
+        for i in range(len([x for x in bunches.values()][0]))
+    ]
     for bunch in bunch_list:
         t_c = bunch["correct"]
         t_g = bunch["google"]
         t_kb = bunch["kb"]
         if t_g == t_kb:
-            if (t_g == t_c):
+            if t_g == t_c:
                 if agreement and g_correct and kb_correct:
                     c.append(t_c)
                     g.append(t_g)
@@ -139,12 +169,12 @@ def filter_bunches(bunches,
                     g.append(t_g)
                     kb.append(t_kb)
         else:
-            if (t_g == t_c):
+            if t_g == t_c:
                 if not agreement and g_correct and not kb_correct:
                     c.append(t_c)
                     g.append(t_g)
                     kb.append(t_kb)
-            elif (t_kb == t_c):
+            elif t_kb == t_c:
                 if not agreement and not g_correct and kb_correct:
                     c.append(t_c)
                     g.append(t_g)
@@ -154,21 +184,21 @@ def filter_bunches(bunches,
                     c.append(t_c)
                     g.append(t_g)
                     kb.append(t_kb)
-    return {
-        "correct": c,
-        "google": g,
-        "kb": kb
-    }
+    return {"correct": c, "google": g, "kb": kb}
 
-def filter_bunches_only_on_agreement(bunches,agreement):
+
+def filter_bunches_only_on_agreement(bunches, agreement):
 
     c, g, kb = [], [], []
-    bunch_list = [{k: bunches[k][i] for k in bunches} for i in range(len([x for x in bunches.values()][0]))]
+    bunch_list = [
+        {k: bunches[k][i] for k in bunches}
+        for i in range(len([x for x in bunches.values()][0]))
+    ]
     for bunch in bunch_list:
         t_c = bunch["correct"]
         t_g = bunch["google"]
         t_kb = bunch["kb"]
-        if (t_g == t_kb):
+        if t_g == t_kb:
             if agreement:
                 c.append(t_c)
                 g.append(t_g)
@@ -179,13 +209,8 @@ def filter_bunches_only_on_agreement(bunches,agreement):
                 g.append(t_g)
                 kb.append(t_kb)
 
-    return {
-        "correct" : c,
-        "google" : g,
-        "kb" : kb
-    }
+    return {"correct": c, "google": g, "kb": kb}
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

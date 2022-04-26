@@ -1,6 +1,10 @@
 import unittest
 
-from google_kb_z_speaker.main import bunch_agrees, agreement_percentage, get_lcs_str
+from google_kb_z_speaker.main import (
+    bunch_agrees,
+    agreement_percentage,
+    get_lcs_str,
+)
 
 
 class MyTestCase(unittest.TestCase):
@@ -8,7 +12,7 @@ class MyTestCase(unittest.TestCase):
         bunch = {
             "google": "Hello one",
             "kb": "Hello one",
-            "correct": "Hello one"
+            "correct": "Hello one",
         }
         print("Percentage agreement ", agreement_percentage(bunch))
         self.assertTrue(bunch_agrees(bunch, threshold=1))
@@ -17,7 +21,7 @@ class MyTestCase(unittest.TestCase):
         bunch = {
             "google": "one two four",
             "kb": "one two three four",
-            "correct": "one three four"
+            "correct": "one three four",
         }
         self.assertTrue(bunch_agrees(bunch, 0.75))
 
@@ -25,9 +29,10 @@ class MyTestCase(unittest.TestCase):
         bunch = {
             "google": "one kaååa two zeta four",
             "kb": "one two three four",
-            "correct": "one three four"
+            "correct": "one three four",
         }
         self.assertEqual(get_lcs_str(bunch), "one two four")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
