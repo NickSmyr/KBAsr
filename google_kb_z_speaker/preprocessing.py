@@ -16,10 +16,7 @@ def singular_phonemes(txt: str):
 
 
 def singular_phonemes_preprocess(bunches):
-    return {
-        k: [" ".join(singular_phonemes(s)) for s in v]
-        for k, v in bunches.items()
-    }
+    return {k: [" ".join(singular_phonemes(s)) for s in v] for k, v in bunches.items()}
 
 
 def get_swedish_phonemes_z(bunches, phonemizer, stress_marks=True):
@@ -65,9 +62,7 @@ def get_bunches(transcriptions_path, speechType="dialogue"):
             ]
         )
     else:
-        raise Exception(
-            "Speech type must be one of [maggan_dialogue, maggan_read]"
-        )
+        raise Exception("Speech type must be one of [maggan_dialogue, maggan_read]")
 
     print("====Loading data====")
     print(f"Speech type : {speechType} detected speakers {speakers}")

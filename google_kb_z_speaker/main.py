@@ -1,6 +1,6 @@
 from difflib import SequenceMatcher
 
-from utils.loadfile import extract_file_idxs_from_lines
+from annotation_pipeline.utils.loadfile import extract_file_idxs_from_lines
 
 
 def fix_lines(model2speaker_lines):
@@ -9,15 +9,10 @@ def fix_lines(model2speaker_lines):
     :return: the corrected lines
     """
     # Test which numbers are missing from the correct
-    nums = {
-        k: extract_file_idxs_from_lines(v)
-        for k, v in model2speaker_lines.items()
-    }
+    nums = {k: extract_file_idxs_from_lines(v) for k, v in model2speaker_lines.items()}
 
     # Create mappings from  file idxs to list idxs
-    model2fi2li = {
-        k: {fi: li for li, fi in enumerate(v)} for k, v in nums.items()
-    }
+    model2fi2li = {k: {fi: li for li, fi in enumerate(v)} for k, v in nums.items()}
     # Correct lines are subsets of the transcribed lines
     nums = {k: set(v) for k, v in nums.items()}
     assert nums["correct"] == nums["google"]
@@ -39,10 +34,7 @@ def fix_lines(model2speaker_lines):
 
 def file_lines_are_correct(model2speaker_lines):
 
-    nums = {
-        k: extract_file_idxs_from_lines(v)
-        for k, v in model2speaker_lines.items()
-    }
+    nums = {k: extract_file_idxs_from_lines(v) for k, v in model2speaker_lines.items()}
 
     # Correct lines are subsets of the transcribed lines
     nums = {k: set(v) for k, v in nums.items()}

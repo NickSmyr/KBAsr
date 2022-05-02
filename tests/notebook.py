@@ -1,6 +1,6 @@
 import unittest
 
-from pipeline.breath_detection.split_on_breaths_and_silences import (
+from annotation_pipeline.pipeline.breath_detection.split_on_breaths_and_silences import (
     split_on_breaths_and_silences,
 )
 

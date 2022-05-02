@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from utils.phonemes import (
+from annotation_pipeline.utils.phonemes import (
     get_swedish_phonemes,
     init_phonemizer,
     unravel_phonemes,
@@ -22,9 +22,7 @@ class TestPhonemes(unittest.TestCase):
         ]
         self.STRESS_MARKS = ["'", '"', "`"]
         self.PHONEME_DICT = read_phoneme_dict("models/stress_lex_mtm.txt")
-        self.PHONEMIZER = init_phonemizer(
-            "cpu", "models/deep-phonemizer-se.pt"
-        )
+        self.PHONEMIZER = init_phonemizer("cpu", "models/deep-phonemizer-se.pt")
 
         # Assert there exist OOV words and stress marks
         oov_exist = False
@@ -41,7 +39,7 @@ class TestPhonemes(unittest.TestCase):
         self.assertTrue(oov_exist and stress_marks_exist)
 
     def test_phonemization_wrapper(self):
-        ph = init_phonemizer("cpu", "../models/deep-phonemizer-se.pt")
+        ph = init_phonemizer("cpu", "models/deep-phonemizer-se.pt")
         # Phonemizer wrapper that provides no extra functionality
         ph_new = phonemizer_wrapper(ph, None, include_stress_marks=True)
         # Phonemizer wrapper that only translates non OOV words to known phoneme seqs
@@ -49,9 +47,7 @@ class TestPhonemes(unittest.TestCase):
             ph, self.PHONEME_DICT, include_stress_marks=True
         )
         # Phonemizer wrapper that provides only removes stress marks
-        ph_new_no_stress = phonemizer_wrapper(
-            ph, None, include_stress_marks=False
-        )
+        ph_new_no_stress = phonemizer_wrapper(ph, None, include_stress_marks=False)
         for sent in self.TEST_SENTENCES:
             torch.manual_seed(0)
             output_ph = ph(sent, "se")
@@ -69,30 +65,26 @@ class TestPhonemes(unittest.TestCase):
                     self.assertTrue("".join(self.PHONEME_DICT[x]) == w)
 
     def test_phonemizer_loading(self):
-        ph = init_phonemizer("cpu", "../models/deep-phonemizer-se.pt")
+        ph = init_phonemizer("cpu", "models/deep-phonemizer-se.pt")
         res = ph(self.TEST_SENTENCES[0], "se")
         # This model only supports with stres marks
         # ph = init_phonemizer("cpu", "../models/deep-phonemizer-se.pt", stress_marks=False)
         # res = ph("Hello trevligt", "se")
         ph = init_phonemizer(
             "cpu",
-            "../models/DeepPhon/winhome/Downloads/DeepPhon_to_send/best_model.pt",
+            "models/best_model.pt",
         )
         res = ph(self.TEST_SENTENCES[0], "se")
         ph = init_phonemizer(
             "cpu",
-            "../models/DeepPhon/winhome/Downloads/DeepPhon_to_send/model_step_40k.pt",
+            "models/model_step_40k.pt",
         )
         res = ph(self.TEST_SENTENCES[0], "se")
 
     def test_unravel(self):
         text = "Hello my name is Nikos"
-        phonemizer = init_phonemizer(
-            "cpu", "../models/deep-phonemizer-se.pt", True
-        )
-        res = get_swedish_phonemes(
-            text, phonemizer, "../models/stress_lex_mtm.txt"
-        )
+        phonemizer = init_phonemizer("cpu", "models/deep-phonemizer-se.pt", True)
+        res = get_swedish_phonemes(text, phonemizer, "models/stress_lex_mtm.txt")
         self.assertTrue("_" in res and " " in res)
         res = unravel_phonemes(res)
         self.assertFalse("_" in res and " " in res)

@@ -33,16 +33,12 @@ def preprocess(
     stress_marks,
 ):
     if phoneme_words:
-        bunches = get_swedish_phonemes_z(
-            bunches, phonemizer, stress_marks=stress_marks
-        )
+        bunches = get_swedish_phonemes_z(bunches, phonemizer, stress_marks=stress_marks)
         # TODO backwards compatibility break
         # bunches = {k: [process_phonemizer_output(x) for x in v] for k, v in bunches.items()}
 
     if singular_phonemes:
-        bunches = get_swedish_phonemes_z(
-            bunches, phonemizer, stress_marks=stress_marks
-        )
+        bunches = get_swedish_phonemes_z(bunches, phonemizer, stress_marks=stress_marks)
         bunches = singular_phonemes_preprocess(bunches)
 
     if preprocess_hook is not None:
@@ -50,9 +46,7 @@ def preprocess(
 
     if _filter is not None:
         if len(_filter) == 1 and "agreement" in _filter:
-            bunches = filter_bunches_only_on_agreement(
-                bunches, _filter["agreement"]
-            )
+            bunches = filter_bunches_only_on_agreement(bunches, _filter["agreement"])
         else:
             bunches = filter_bunches(bunches, **_filter)
 
@@ -79,9 +73,7 @@ def eoi(bunches):
     gei = 0
     tei = 0
 
-    for c_l, g_l, kb_l in zip(
-        bunches["correct"], bunches["google"], bunches["kb"]
-    ):
+    for c_l, g_l, kb_l in zip(bunches["correct"], bunches["google"], bunches["kb"]):
         g_s = set(error_idxs(c_l, g_l))
         k_s = set(error_idxs(c_l, kb_l))
 
@@ -98,9 +90,7 @@ def eoi(bunches):
 def lcs_percentage(bunches):
     lcses = []
 
-    for c_l, g_l, kb_l in zip(
-        bunches["correct"], bunches["google"], bunches["kb"]
-    ):
+    for c_l, g_l, kb_l in zip(bunches["correct"], bunches["google"], bunches["kb"]):
         total_length_before = len(g_l.split(" ")) + len(kb_l.split(" "))
         words_set = set(g_l.split(" ") + kb_l.split(" "))
         w2char = {x: chr(i) for i, x in enumerate(words_set)}
@@ -304,16 +294,12 @@ def get_ensemble_output(
         for ii, p in enumerate(block_list):
             if ii in unmatched_idxs:
                 if use_phonemizer:
-                    phonemized_block_pair_idxs = (
-                        locator2unmatched_block_pair_index[(i, ii)]
-                    )
+                    phonemized_block_pair_idxs = locator2unmatched_block_pair_index[
+                        (i, ii)
+                    ]
                     phonemized_block_pair = (
-                        phonemized_unmatched_blocks[
-                            phonemized_block_pair_idxs[0]
-                        ],
-                        phonemized_unmatched_blocks[
-                            phonemized_block_pair_idxs[1]
-                        ],
+                        phonemized_unmatched_blocks[phonemized_block_pair_idxs[0]],
+                        phonemized_unmatched_blocks[phonemized_block_pair_idxs[1]],
                     )
                     ratio = SequenceMatcher(
                         None,
