@@ -1,6 +1,6 @@
 from difflib import SequenceMatcher
 
-from annotation_pipeline.utils.loadfile import extract_file_idxs_from_lines
+from utils.loadfile import extract_file_idxs_from_lines
 
 
 def fix_lines(model2speaker_lines):
